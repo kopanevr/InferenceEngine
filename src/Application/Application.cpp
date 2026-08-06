@@ -34,22 +34,22 @@ Application::Application(int argc, char* argv[])
 
     inferenceSubsystem->setModelFileName(applicationConfig.modelFileName);
 
-    // Установка пути к файлу модели.
+    // Установка пути к директории модели.
 
     // Проверка пути.
 
-    if (commandLineInterpreter->getArgs().pathToModelFile)
+    if (commandLineInterpreter->getArgs().pathToModelDirectory)
     {
-        // Установка пути к файлу модели, указанного в аргументах приложения при запуске.
+        // Установка пути к директории модели, указанного в аргументах приложения при запуске.
 
-        inferenceSubsystem->setPathToModelFile(commandLineInterpreter->getArgs().pathToModelFile);
+        inferenceSubsystem->setPathToModelDirectory(commandLineInterpreter->getArgs().pathToModelDirectory);
     }
     else
     if (applicationConfig.pathToModelFile)
     {
-        // Установка пути к файлу модели, указанного в конфигурации приложения.
+        // Установка пути к директории модели, указанного в конфигурации приложения.
 
-        inferenceSubsystem->setPathToModelFile(applicationConfig.pathToModelFile);
+        inferenceSubsystem->setPathToModelDirectory(applicationConfig.pathToModelFile);
     }
     else
     {

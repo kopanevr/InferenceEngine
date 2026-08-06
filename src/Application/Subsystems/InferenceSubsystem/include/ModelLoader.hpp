@@ -11,11 +11,14 @@
 class ModelLoader final
 {
 private:
-    ///@brief Путь к файлу модели.
-    char* modelFilePath;
+    /// @brief Путь к директории модели.
+    char* modelDirectoryPath;
 
     /// @brief Имя файла модели.
     char* modelFileName;
+
+    /// @brief Путь к файлу модели.
+    std::string modelFilePath;
 
     /// @brief Указатель на экземпляр.
     static ModelLoader* instance;
@@ -38,33 +41,36 @@ public:
         return *instance;
     }
 
-    /// @brief Устанавливает путь к файлу модели.
-    void setPathToModelFile(char* path) { modelFilePath = path; }
+    /// @brief Устанавливает путь к директории модели.
+    /// @param name Путь к директории модели.
+    void setPathToModelDirectory(char* path) noexcept { modelDirectoryPath = path; }
 
-    /// @brief Возвращает путь к файлу модели.
-    /// @return Путь к файлу модели.
-    const char* getPathToModelFile() const noexcept { return modelFilePath; }
+    /// @brief Возвращает путь к директории модели.
+    /// @return Путь к директории модели.
+    const char* getPathToModelDirectory() const noexcept { return modelDirectoryPath; }
 
     /// @brief Устанавливает имя файла модели.
     /// @param name Имя файла модели.
-    void setModelFileName(char* name) { modelFileName = name; }
+    void setModelFileName(char* name) noexcept { modelFileName = name; }
 
     /// @brief Возвращает имя файла модели.
     /// @return Имя файла модели.
-    const char* getModelFileName() const noexcept { return modelFilePath; }
+    const char* getModelFileName() const noexcept { return modelFileName; }
 
-    /// @brief Возвращает модель.
+    /// @brief Возвращает путь файлу модели.
     /// @details
-    /// @return Модель.
-    std::string getModel() const noexcept
+    /// @return Путь к файлу модели.
+    const char* getPathToModelFile() noexcept
     {
-        assert(modelFilePath && modelFileName);
+        assert(modelDirectoryPath && modelFileName);
 
-        if (!modelFilePath || !modelFileName)
+        if (!modelDirectoryPath || !modelFileName)
         {
-            return "";
+            return {};
         }
 
-        return std::string(modelFilePath) + modelFileName;
+        (modelFilePath += modelDirectoryPath) += modelFileName;
+
+        return modelFilePath.c_str();
     }
 };

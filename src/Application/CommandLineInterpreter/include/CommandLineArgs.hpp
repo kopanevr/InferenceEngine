@@ -5,6 +5,6 @@
 /// @brief Аргументы.
 struct CommandLineArgs final
 {
-    /// @brief Путь к файлу модели.
-    char* pathToModelFile;
+    /// @brief Путь к директории модели.
+    char* pathToModelDirectory;
 };

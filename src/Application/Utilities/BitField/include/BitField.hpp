@@ -16,6 +16,11 @@ using bitSubfield_t = uint64_t;
 /// @param name Имя флага-состояния.
 #define FLAG(name) bitSubfield_t name : 1;
 
+/// @brief Флаг-состояние .
+/// @param name Имя флага-состояния.
+/// @brief state Состояние.
+#define FLAG_WITH_DEFAULT_STATE(name, state) bitSubfield_t name : 1 {state};
+
 /// @brief Битовое подполе.
 /// @param name Имя битового подполя.
 /// @param size Размер битового подполя.

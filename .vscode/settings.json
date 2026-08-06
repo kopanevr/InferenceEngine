@@ -2,7 +2,7 @@
     "cmake.debugConfig": {
         "args": [
             "-p",
-            "${workspaceFolder}/models"
+            "${workspaceFolder}/models/"
         ]
     }
 }
