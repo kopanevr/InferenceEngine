@@ -29,9 +29,9 @@ void CommandLineInterpreter::bodyProcess(int argc, char* argv[])
         case 'h':
             break;
         case 'p':
-            // Установка пути к файлу модели.
+            // Установка пути к директории модели.
 
-            args.pathToModelFile = optarg;
+            args.pathToModelDirectory = optarg;
 
             status = true;
             break;

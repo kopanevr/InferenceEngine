@@ -43,7 +43,7 @@ void InferenceSubsystem::init()
 /// @brief Предварительная настройка перед запуском подсистемы.
 void InferenceSubsystem::setBeforeStartUp()
 {
-    Ort::ThreadingOptions threadingOptions;
+    Ort::ThreadingOptions threadingOptions = {};
 
     // Установка количества потоков внутри операции.
 
@@ -56,6 +56,26 @@ void InferenceSubsystem::setBeforeStartUp()
     // Создание окружения.
 
     Ort::Env env(threadingOptions, ORT_LOGGING_LEVEL_WARNING, "onnxInference");
+
+    Ort::SessionOptions sessionOptions = {};
+
+    sessionOptions.DisablePerSessionThreads();
+
+    sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
+
+    // Создание сессии.
+
+#ifndef NDEBUG
+    // Получение пути к модели.
+
+    const char* pathToModelFile = modelLoader->getPathToModelFile();
+
+    assert(pathToModelFile);
+
+    Ort::Session session(env, pathToModelFile, sessionOptions);
+#else
+    Ort::Session session(env, modelLoader->getPathToModelFile(), sessionOptions);
+#endif
 }
 
 /// @brief Предварительная настройка перед остановкой подсистемы.
@@ -79,7 +99,7 @@ int InferenceSubsystem::processBody()
 
         //
 
-        ) = { .isStarted = {} }; // Статическое битовое поле.
+        ); // Статическое битовое поле.
 
     //
 
@@ -157,11 +177,11 @@ bool InferenceSubsystem::body()
     return true;
 }
 
-/// @brief Устанавливает путь к файлу модели.
-/// @param path Путь к файлу модели.
-void InferenceSubsystem::setPathToModelFile(char* path)
+/// @brief Устанавливает путь к директории модели.
+/// @param path Путь к директории модели.
+void InferenceSubsystem::setPathToModelDirectory(char* path)
 {
-    modelLoader->setPathToModelFile(path);
+    modelLoader->setPathToModelDirectory(path);
 }
 
 /// @brief

@@ -116,7 +116,7 @@ public:
     /// @brief Возвращает подсистему по идентификатору.
     /// @param id Идентификатор.
     /// @return Указатель на подсистему.
-    constexpr Subsystem* getSubsystemById(const SubsystemId id) const
+    constexpr Subsystem* getSubsystemById(const SubsystemId id) const noexcept
     {
         for (const auto& item : subsystems)
         {

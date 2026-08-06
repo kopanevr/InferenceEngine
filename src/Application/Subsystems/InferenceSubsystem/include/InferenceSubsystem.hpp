@@ -13,6 +13,7 @@
 //
 
 #include "Subsystem.hpp"
+#include "Logger.hpp"
 
 //
 
@@ -28,6 +29,9 @@ class InferenceSubsystem final : public Subsystem
 private:
     /// @brief Указатель на загрузчик модели.
     std::unique_ptr<ModelLoader> modelLoader;
+
+    /// @brief Указатель на регистратор событий.
+    std::shared_ptr<Logger> logger;
 
     /// @brief Поток вывода.
     std::thread inferenceThread;
@@ -69,9 +73,9 @@ public:
         return &instance;
     }
 
-    /// @brief Устанавливает путь к файлу модели.
-    /// @param path Путь к файлу модели.
-    void setPathToModelFile(char* path);
+    /// @brief Устанавливает путь к директории модели.
+    /// @param path Путь к директории модели.
+    void setPathToModelDirectory(char* path);
 
     /// @brief Возвращает путь к файлу модели.
     /// @param name Имя файла модели.

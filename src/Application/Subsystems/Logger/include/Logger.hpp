@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Подсистема регистратора событий.
+ */
+
 #pragma once
 
 //
@@ -6,9 +11,14 @@
 
 //
 
-/// @brief
+#include <queue>
+
+//
+
+/// @brief Регистратор событий
 class Logger final : public Subsystem
 {
+private:
 private:
     /// @brief Конструктор.
     Logger();
@@ -35,4 +45,10 @@ public:
 
         return &instance;
     }
+
+    /// @brief Вывод данных в терминал.
+    void sendDataToTerminal();
+
+    /// @brief Запись данных.
+    void recordData() {}
 };
