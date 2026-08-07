@@ -63,6 +63,9 @@ private:
 
     /// @brief
     bool body();
+
+    /// @brief
+    void prepareBeforeStartInference();
 public:
     /// @brief Возвращает единственный экземпляр.
     /// @return Указатель на статический объект.

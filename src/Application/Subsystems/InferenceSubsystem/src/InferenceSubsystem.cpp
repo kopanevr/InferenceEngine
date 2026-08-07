@@ -43,39 +43,9 @@ void InferenceSubsystem::init()
 /// @brief Предварительная настройка перед запуском подсистемы.
 void InferenceSubsystem::setBeforeStartUp()
 {
-    Ort::ThreadingOptions threadingOptions = {};
+    // Подготовка перед выводом.
 
-    // Установка количества потоков внутри операции.
-
-    threadingOptions.SetGlobalIntraOpNumThreads(4);
-
-    // Установка количества потоков между операциями.
-
-    threadingOptions.SetGlobalInterOpNumThreads(1);
-
-    // Создание окружения.
-
-    Ort::Env env(threadingOptions, ORT_LOGGING_LEVEL_WARNING, "onnxInference");
-
-    Ort::SessionOptions sessionOptions = {};
-
-    sessionOptions.DisablePerSessionThreads();
-
-    sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
-
-    // Создание сессии.
-
-#ifndef NDEBUG
-    // Получение пути к модели.
-
-    const char* pathToModelFile = modelLoader->getPathToModelFile();
-
-    assert(pathToModelFile);
-
-    Ort::Session session(env, pathToModelFile, sessionOptions);
-#else
-    Ort::Session session(env, modelLoader->getPathToModelFile(), sessionOptions);
-#endif
+    prepareBeforeStartInference();
 }
 
 /// @brief Предварительная настройка перед остановкой подсистемы.
@@ -175,6 +145,93 @@ bool InferenceSubsystem::body()
     }
 
     return true;
+}
+
+/// @brief Подготавливает перед запуском вывода.
+void InferenceSubsystem::prepareBeforeStartInference()
+{
+    STATIC_BIT_FIELD(
+        0, // Идентификатор битового поля.
+        1, // Ожидаемый размер в байт.
+
+        //
+
+        FLAG(isCompleted)
+
+        //
+
+        ); // Статическое битовое поле.
+
+    //
+
+    if (GET_BIT_FIELD(0).isCompleted) { return; }
+
+    //
+
+    Ort::ThreadingOptions threadingOptions = {};
+
+    // Установка количества потоков внутри операции.
+
+    threadingOptions.SetGlobalIntraOpNumThreads(4);
+
+    // Установка количества потоков между операциями.
+
+    threadingOptions.SetGlobalInterOpNumThreads(1);
+
+    // Создание окружения.
+
+    Ort::Env env(threadingOptions, ORT_LOGGING_LEVEL_WARNING, "onnxInference");
+
+    Ort::SessionOptions sessionOptions = {};
+
+    sessionOptions.DisablePerSessionThreads();
+
+    // Проверка наличия оптимизированной модели.
+
+    if (0)
+    {
+        // Создание сессии.
+
+#ifndef NDEBUG
+        // Получение пути к оптимизированной модели.
+
+        const char* pathToOptimizedModelFile = modelLoader->getPathToModelFile();
+
+        assert(pathToOptimizedModelFile);
+
+        Ort::Session session(env, pathToOptimizedModelFile, sessionOptions);
+#else
+        Ort::Session session(env, modelLoader->getPathToModelFile(), sessionOptions);
+#endif
+}
+    else
+    {
+        // Установка уровня оптимизации модели.
+
+        sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
+
+        // Установка пути к файлу оптимизированной модели.
+
+        sessionOptions.SetOptimizedModelFilePath("");
+
+        // Создание сессии.
+
+#ifndef NDEBUG
+        // Получение пути к модели.
+
+        const char* pathToModelFile = modelLoader->getPathToModelFile();
+
+        assert(pathToModelFile);
+
+        Ort::Session session(env, pathToModelFile, sessionOptions);
+#else
+        Ort::Session session(env, modelLoader->getPathToModelFile(), sessionOptions);
+#endif
+    }
+
+    //
+
+    GET_BIT_FIELD(0).isCompleted = true;
 }
 
 /// @brief Устанавливает путь к директории модели.

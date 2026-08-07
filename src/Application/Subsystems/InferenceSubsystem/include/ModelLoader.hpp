@@ -73,4 +73,21 @@ public:
 
         return modelFilePath.c_str();
     }
+
+        /// @brief Возвращает путь файлу оптимизированной модели.
+    /// @details
+    /// @return Путь к файлу оптимизированной модели.
+    const char* getPathToOptimizedModelFile() noexcept
+    {
+        assert(modelDirectoryPath && modelFileName);
+
+        if (!modelDirectoryPath || !modelFileName)
+        {
+            return {};
+        }
+
+        (modelFilePath += modelDirectoryPath) += modelFileName;
+
+        return modelFilePath.c_str();
+    }
 };
