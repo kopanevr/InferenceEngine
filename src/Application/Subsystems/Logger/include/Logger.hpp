@@ -99,7 +99,7 @@ public:
 #ifndef NDEBUG
 #   define DEBUG(...) LOG("[ОТЛАДКА]" __VA_OPT__(,) __VA_ARGS__)
 #else
-#   define DEBUG(...)
+#   define DEBUG(...) ((void)0)
 #endif
 
 #define INFO(...) LOG("[ИНФО]" __VA_OPT__(,) __VA_ARGS__)
