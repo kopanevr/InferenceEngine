@@ -14,4 +14,6 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/src/Application/Utilities/TimerManager/include
 )
 
+target_link_libraries(InferenceSubsystem PUBLIC Logger)
+
 target_link_libraries(InferenceSubsystem PUBLIC ${CMAKE_SOURCE_DIR}/third_party/onnxruntime-linux-x64-1.28.0/lib/libonnxruntime.so)

@@ -51,6 +51,12 @@ protected:
     /// @brief Тело основного цикла.
     virtual int processBody() = 0;
 public:
+    /// @brief Конструктор.
+    Subsystem() = default;
+
+    /// @brief Деструктор.
+    virtual ~Subsystem() = default;
+
     /// @brief Запуск подсистемы.
     void startUp()
     {

@@ -41,8 +41,6 @@ private:
 private:
     /// @brief Конструктор.
     InferenceSubsystem();
-    /// @brief Деструктор.
-    ~InferenceSubsystem();
     InferenceSubsystem& operator=(const InferenceSubsystem&) = delete;
     InferenceSubsystem(const InferenceSubsystem&) = delete;
 
@@ -67,6 +65,9 @@ private:
     /// @brief
     void prepareBeforeStartInference();
 public:
+    /// @brief Деструктор.
+    ~InferenceSubsystem();
+
     /// @brief Возвращает единственный экземпляр.
     /// @return Указатель на статический объект.
     static InferenceSubsystem* getInstance()

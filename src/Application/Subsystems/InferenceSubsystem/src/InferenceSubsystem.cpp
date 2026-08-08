@@ -2,8 +2,18 @@
 
 //
 
+#include <filesystem>
+
+//
+
 #include "ModelLoader.hpp"
 #include "SubsystemId.hpp"
+
+//
+
+// Подсистемы.
+
+#include "Logger.hpp"
 
 //
 
@@ -168,6 +178,10 @@ void InferenceSubsystem::prepareBeforeStartInference()
 
     //
 
+    INFO("Запуск подготовки перед выводом");
+
+    //
+
     Ort::ThreadingOptions threadingOptions = {};
 
     // Установка количества потоков внутри операции.
@@ -188,22 +202,18 @@ void InferenceSubsystem::prepareBeforeStartInference()
 
     // Проверка наличия оптимизированной модели.
 
-    if (0)
+    // Получение пути к оптимизированной модели.
+
+    const char* pathToOptimizedModelFile = modelLoader->getPathToOptimizedModelFile();
+
+    assert(pathToOptimizedModelFile);
+
+    if (std::filesystem::exists(pathToOptimizedModelFile))
     {
         // Создание сессии.
 
-#ifndef NDEBUG
-        // Получение пути к оптимизированной модели.
-
-        const char* pathToOptimizedModelFile = modelLoader->getPathToModelFile();
-
-        assert(pathToOptimizedModelFile);
-
         Ort::Session session(env, pathToOptimizedModelFile, sessionOptions);
-#else
-        Ort::Session session(env, modelLoader->getPathToModelFile(), sessionOptions);
-#endif
-}
+    }
     else
     {
         // Установка уровня оптимизации модели.
@@ -222,6 +232,8 @@ void InferenceSubsystem::prepareBeforeStartInference()
         const char* pathToModelFile = modelLoader->getPathToModelFile();
 
         assert(pathToModelFile);
+
+        DEBUG("Путь к файлу модели:", pathToModelFile);
 
         Ort::Session session(env, pathToModelFile, sessionOptions);
 #else

@@ -6,6 +6,12 @@
 
 //
 
+#include "SubsystemId.hpp"
+
+//
+
+// Подсистемы.
+
 #include "SubsystemManager.hpp"
 
 //
@@ -28,7 +34,7 @@ Application::Application(int argc, char* argv[])
         return;
     }
 
-    InferenceSubsystem* inferenceSubsystem = InferenceSubsystem::getInstance();
+    InferenceSubsystem* inferenceSubsystem = static_cast<InferenceSubsystem*>(subsystemManager->getSubsystemById(SubsystemId::InferenceSubsystem));
 
     // Установка имени файла модели.
 

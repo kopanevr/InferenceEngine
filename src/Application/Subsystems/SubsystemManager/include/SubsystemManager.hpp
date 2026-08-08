@@ -19,6 +19,7 @@
 
 //
 
+#include "Logger.hpp"
 #include "InferenceSubsystem.hpp"
 
 //
@@ -39,7 +40,7 @@ class SubsystemManager final : public Subsystem
 {
 private:
     /// @brief Количество подсистем.
-    static constexpr size_t subsystemCount = 1u;
+    static constexpr size_t subsystemCount = static_cast<size_t>(SubsystemId::Count) - 1u;
 
     /// @brief Подсистемы.
     std::array<Subsystem*, subsystemCount> subsystems;
@@ -56,6 +57,7 @@ private:
 
         size_t i = {};
 
+        ADD_SUBSYSTEM(Logger);
         ADD_SUBSYSTEM(InferenceSubsystem);
     }
 
