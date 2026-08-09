@@ -97,6 +97,8 @@ public:
     /// @brief Тело основного цикла.
     int processBody() override
     {
+        DEBUG("Подсистема", subsystemHandle.name, "запущена");
+
         while (true)
         {
             for (const auto& item : subsystems)

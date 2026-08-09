@@ -43,7 +43,7 @@ InferenceSubsystem::~InferenceSubsystem()
     ModelLoader::instance = nullptr;
 }
 
-/// @brief
+/// @brief Инициализация подсистемы.
 void InferenceSubsystem::init()
 {
     subsystemHandle.id   = SubsystemId::InferenceSubsystem;
@@ -71,7 +71,7 @@ int InferenceSubsystem::processBody()
 {
     STATIC_BIT_FIELD(
         0, // Идентификатор битового поля.
-        1, // Ожидаемый размер в байт.
+        1, // Ожидаемый размер битового поля в байт.
 
         //
 
@@ -99,6 +99,8 @@ int InferenceSubsystem::processBody()
         }
 
         GET_BIT_FIELD(0).isStarted = true;
+
+        DEBUG("Подсистема", subsystemHandle.name, "запущена");
     }
     else
     {
@@ -162,7 +164,7 @@ void InferenceSubsystem::prepareBeforeStartInference()
 {
     STATIC_BIT_FIELD(
         0, // Идентификатор битового поля.
-        1, // Ожидаемый размер в байт.
+        1, // Ожидаемый размер битового поля в байт.
 
         //
 
@@ -216,6 +218,8 @@ void InferenceSubsystem::prepareBeforeStartInference()
     }
     else
     {
+        WARNING("Файл оптимизированной модели отсутствует");
+
         // Установка уровня оптимизации модели.
 
         sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
