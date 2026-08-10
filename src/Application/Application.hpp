@@ -42,6 +42,9 @@ private:
     /// @param argv Указатель на список аргументов.
     Application(int argc, char* argv[]);
     ~Application();
+
+    /// @brief Вывод информации о приложении.
+    void printInfo();
 public:
     /// @brief
     static Application* getInstance(int argc, char* argv[])

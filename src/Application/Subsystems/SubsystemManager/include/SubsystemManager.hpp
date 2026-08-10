@@ -79,6 +79,8 @@ public:
     /// @brief Настройка перед запуском подсистемы.
     void setBeforeStartUp() override
     {
+
+
         for (const auto& item : subsystems)
         {
             item->startUp();

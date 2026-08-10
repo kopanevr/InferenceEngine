@@ -34,6 +34,13 @@ Application::Application(int argc, char* argv[])
         return;
     }
 
+
+    subsystemManager = std::unique_ptr<SubsystemManager>(new SubsystemManager());
+
+    SubsystemManager::instance = subsystemManager.get();
+
+    //
+
     InferenceSubsystem* inferenceSubsystem = static_cast<InferenceSubsystem*>(subsystemManager->getSubsystemById(SubsystemId::InferenceSubsystem));
 
     // Установка имени файла модели.
@@ -64,12 +71,6 @@ Application::Application(int argc, char* argv[])
         return;
     }
 
-    //
-
-    subsystemManager = std::unique_ptr<SubsystemManager>(new SubsystemManager());
-
-    SubsystemManager::instance = subsystemManager.get();
-
     // Инициализация.
 
     init();
@@ -93,6 +94,10 @@ Application::~Application()
 /// @details Производит запуск менеджера подсистем.
 void Application::init()
 {
+    printInfo();
+
+    //
+
     if (subsystemManager)
     {
         subsystemManager->startUp();
@@ -141,4 +146,13 @@ void Application::deinit()
     {
         subsystemManager->shutDown();
     }
+}
+
+/// @brief Вывод информации о приложении.
+void Application::printInfo()
+{
+    LOG("Информация о приложении:");
+
+    LOG("Версия", 1);
+    LOG("Подверсия", 0);
 }
