@@ -21,6 +21,10 @@
 
 //
 
+#include "onnxruntime_cxx_api.h"
+
+//
+
 class ModelLoader;
 
 /// @brief Подсистема вывода.
@@ -38,6 +42,9 @@ private:
 
     /// @brief Менеджер таймера.
     TimerManager timerManager;
+
+    /// @brief Входной тензор.
+    Ort::Value inputTensor;
 private:
     /// @brief Конструктор.
     InferenceSubsystem();

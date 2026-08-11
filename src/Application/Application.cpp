@@ -94,9 +94,11 @@ Application::~Application()
 /// @details Производит запуск менеджера подсистем.
 void Application::init()
 {
+    // Вывод информации о приложении.
+
     printInfo();
 
-    //
+    // Запуск менеджера подсистем.
 
     if (subsystemManager)
     {

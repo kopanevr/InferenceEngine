@@ -3,6 +3,7 @@
 //
 
 #include <filesystem>
+#include <vector>
 
 //
 
@@ -18,10 +19,6 @@
 //
 
 #include "BitField.hpp"
-
-//
-
-#include "onnxruntime_cxx_api.h"
 
 //
 
@@ -244,6 +241,12 @@ void InferenceSubsystem::prepareBeforeStartInference()
         Ort::Session session(env, modelLoader->getPathToModelFile(), sessionOptions);
 #endif
     }
+
+    std::vector<int64_t> shape = {};
+
+    //
+
+    INFO("Подготовка перед выводом завершена");
 
     //
 
