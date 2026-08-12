@@ -33,7 +33,7 @@ namespace Inference
     template <typename T>
     struct Tensor
     {
-        struct
+        struct MetaData
         {
             /// @brief
             Ort::MemoryInfo info{nullptr};

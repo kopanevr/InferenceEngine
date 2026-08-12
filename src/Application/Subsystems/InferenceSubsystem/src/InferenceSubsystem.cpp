@@ -263,7 +263,7 @@ bool InferenceSubsystem::createInputOutputTensors()
 
     try
     {
-       inputTensor = std::make_unique<Inference::Tensor<Inference::TensorRawDataType>>(new Inference::Tensor<Inference::TensorRawDataType>());
+       inputTensor = std::unique_ptr<Inference::Tensor<Inference::TensorRawDataType>>(new Inference::Tensor<Inference::TensorRawDataType>());
     }
     catch(const std::exception& e)
     {
@@ -272,7 +272,7 @@ bool InferenceSubsystem::createInputOutputTensors()
 
     try
     {
-       outputTensor = std::make_unique<Inference::Tensor<Inference::TensorRawDataType>>(new Inference::Tensor<Inference::TensorRawDataType>());
+       outputTensor = std::unique_ptr<Inference::Tensor<Inference::TensorRawDataType>>(new Inference::Tensor<Inference::TensorRawDataType>());
     }
     catch(const std::exception& e)
     {
