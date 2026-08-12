@@ -242,7 +242,9 @@ void InferenceSubsystem::prepareBeforeStartInference()
 #endif
     }
 
-    std::vector<int64_t> shape = {};
+    // Создание входных и выходных тензоров.
+
+    if (createInputOutputTensors()) { return; }
 
     //
 
@@ -253,6 +255,49 @@ void InferenceSubsystem::prepareBeforeStartInference()
     GET_BIT_FIELD(0).isCompleted = true;
 }
 
+/// @brief Создание входных и выходных тензоров.
+/// @param
+bool InferenceSubsystem::createInputOutputTensors()
+{
+    // Создание входных и выходных тензоров.
+
+    try
+    {
+       inputTensor = std::make_unique<Inference::Tensor<Inference::TensorRawDataType>>(new Inference::Tensor<Inference::TensorRawDataType>());
+    }
+    catch(const std::exception& e)
+    {
+        return 1;
+    }
+
+    try
+    {
+       outputTensor = std::make_unique<Inference::Tensor<Inference::TensorRawDataType>>(new Inference::Tensor<Inference::TensorRawDataType>());
+    }
+    catch(const std::exception& e)
+    {
+        return 1;
+    }
+
+    // Описание входных и выходных тензоров.
+
+    // Описание входных тензоров.
+
+    inputTensor->metaData.shape = {1, 3, 640, 640};
+
+    inputTensor->value = Ort::Value::CreateTensor<Inference::TensorRawDataType>(
+        inputTensor->metaData.info,
+
+        inputTensor->rawData.data(),
+        inputTensor->rawData.size(),
+
+        inputTensor->metaData.shape.data(),
+        inputTensor->metaData.shape.size()
+    );
+
+    return 0;
+}
+
 /// @brief Устанавливает путь к директории модели.
 /// @param path Путь к директории модели.
 void InferenceSubsystem::setPathToModelDirectory(char* path)
@@ -260,7 +305,7 @@ void InferenceSubsystem::setPathToModelDirectory(char* path)
     modelLoader->setPathToModelDirectory(path);
 }
 
-/// @brief
+/// @brief Устанавливает имя файла модели.
 /// @param name Указатель на имя файла модели.
 void InferenceSubsystem::setModelFileName(char* name)
 {

@@ -13,7 +13,6 @@
 //
 
 #include "Subsystem.hpp"
-#include "Logger.hpp"
 
 //
 
@@ -25,6 +24,33 @@
 
 //
 
+namespace Inference
+{
+    using TensorRawDataType = double;
+
+    /// @brief
+    /// @tparam T Тип сырых данных тензора.
+    template <typename T>
+    struct Tensor
+    {
+        struct
+        {
+            /// @brief
+            Ort::MemoryInfo info{nullptr};
+
+            /// @brief Размерность тензора.
+            std::vector<int64_t> shape;
+        }
+        metaData;
+
+        /// @brief Сырые данные тензора.
+        std::vector<T> rawData;
+
+        /// @brief  Тензор.
+        Ort::Value value{nullptr};
+    };
+} // namespace Inference
+
 class ModelLoader;
 
 /// @brief Подсистема вывода.
@@ -34,17 +60,16 @@ private:
     /// @brief Указатель на загрузчик модели.
     std::unique_ptr<ModelLoader> modelLoader;
 
-    /// @brief Указатель на регистратор событий.
-    std::shared_ptr<Logger> logger;
-
     /// @brief Поток вывода.
     std::thread inferenceThread;
 
     /// @brief Менеджер таймера.
     TimerManager timerManager;
 
-    /// @brief Входной тензор.
-    Ort::Value inputTensor;
+    /// @brief Указатель на входной буфер.
+    std::unique_ptr<Inference::Tensor<Inference::TensorRawDataType>> inputTensor;
+    /// @brief Указатель на выходной буфер.
+    std::unique_ptr<Inference::Tensor<Inference::TensorRawDataType>> outputTensor;
 private:
     /// @brief Конструктор.
     InferenceSubsystem();
@@ -69,8 +94,12 @@ private:
     /// @brief
     bool body();
 
-    /// @brief
+    /// @brief Подготовка перед запуском вывода.
     void prepareBeforeStartInference();
+
+    /// @brief Создание входных и выходных тензоров.
+    /// @param
+    bool createInputOutputTensors();
 public:
     /// @brief Деструктор.
     ~InferenceSubsystem();
