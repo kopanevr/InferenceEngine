@@ -17,3 +17,7 @@ target_include_directories(
 target_link_libraries(InferenceSubsystem PUBLIC Logger)
 
 target_link_libraries(InferenceSubsystem PUBLIC ${CMAKE_SOURCE_DIR}/third_party/onnxruntime-linux-x64-1.28.0/lib/libonnxruntime.so)
+
+if (CUSTOM_CONFIGURATION_TURN_ON_OUTPUT_MODEL_INFO)
+    target_compile_definitions(InferenceSubsystem PUBLIC CUSTOM_CONFIGURATION_TURN_ON_OUTPUT_MODEL_INFO=1)
+endif()

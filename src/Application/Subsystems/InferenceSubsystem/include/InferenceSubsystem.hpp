@@ -26,12 +26,52 @@
 
 namespace Inference
 {
+    /// @brief
     using TensorRawDataType = double;
+
+    /// @brief Информация о тензоре.
+    struct TensorInfo
+    {
+        /// @brief Информация о типе.
+        Ort::TypeInfo typeInfo;
+        /// @brief Информация о типе и размерности тензора.
+        Ort::ConstTensorTypeAndShapeInfo tensorTypeAndShapeInfo;
+        /// @brief Тип данных элементов.
+        ONNXTensorElementDataType tensorElementDataType;
+        /// @brief Размерность тензора.
+        std::vector<int64_t> shape;
+    };
+
+    /// @brief
+    struct ModelInfo
+    {
+        /// @brief Количество входов.
+        std::size_t inputCount;
+
+        /// @brief Количество выходов.
+        std::size_t outputCount;
+
+        /// @brief Информация о входных тензорах.
+        std::vector<TensorInfo> inputTensorsInfo;
+
+        /// @brief Информация о выходных тензорах.
+        std::vector<TensorInfo> outputTensorsInfo;
+    };
+
+    /// @brief Дескриптор вывода.
+    struct InferenceHandler final
+    {
+        /// @brief Указатель на окружение.
+        std::unique_ptr<Ort::Env> env;
+
+        /// @brief Указатель на сессию.
+        std::unique_ptr<Ort::Session> session;
+    };
 
     /// @brief
     /// @tparam T Тип сырых данных тензора.
     template <typename T>
-    struct Tensor
+    struct Tensor final
     {
         struct MetaData
         {
@@ -66,6 +106,12 @@ private:
     /// @brief Менеджер таймера.
     TimerManager timerManager;
 
+    /// @brief Дескриптор вывода.
+    Inference::InferenceHandler inferenceHandler;
+
+    /// @brief Указатель на информацию о модели.
+    std::unique_ptr<Inference::ModelInfo> modelInfo;
+
     /// @brief Указатель на входной буфер.
     std::unique_ptr<Inference::Tensor<Inference::TensorRawDataType>> inputTensor;
     /// @brief Указатель на выходной буфер.
@@ -96,6 +142,10 @@ private:
 
     /// @brief Подготовка перед запуском вывода.
     void prepareBeforeStartInference();
+
+    /// @brief Получение информации о модели.
+    /// @param handler Дескриптор вывода.
+    [[nodiscard]] std::unique_ptr<Inference::ModelInfo> getModelInfo(const Inference::InferenceHandler& handler);
 
     /// @brief Создание входных и выходных тензоров.
     /// @param
