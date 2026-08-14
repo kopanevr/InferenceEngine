@@ -261,21 +261,21 @@ void InferenceSubsystem::prepareBeforeStartInference()
     GET_BIT_FIELD(0).isCompleted = true;
 }
 
-/// @brief Создание входных и выходных тензоров.
-/// @param inferenceHandler Дескриптор вывода.
-/// @return Информация о выводе.
+/// @brief Получение информации о модели.
+/// @param handler Дескриптор вывода.
+/// @return Информация о модели.
 std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inference::InferenceHandler& handler)
 {
     std::unique_ptr<Inference::ModelInfo> modelInfo = std::unique_ptr<Inference::ModelInfo>(new Inference::ModelInfo());
 
-    // Получение количества входов и выходов.
+    // Получение количества входов.
 
     modelInfo->inputCount = handler.session->GetInputCount();
 
-    Inference::TensorInfo tensorInfo = {};
-
     for (std::size_t i = 0; i < modelInfo->inputCount; i++)
     {
+        Inference::TensorInfo tensorInfo = {};
+
         // Получение информации о типе входов.
 
         tensorInfo.typeInfo = handler.session->GetInputTypeInfo(i);
@@ -290,11 +290,13 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
 
         tensorInfo.shape = tensorInfo.tensorTypeAndShapeInfo.GetShape();
 
-        modelInfo->inputTensorsInfo.push_back(tensorInfo);
+        modelInfo->inputTensorsInfo.push_back(std::move(tensorInfo));
     }
 
 #ifndef NDEBUG
-    // Вывод информации о модели.
+    // Вывод информации о входах.
+
+    size_t i = 0; // Индекс тензора.
 
     #if (CUSTOM_CONFIGURATION_TURN_ON_OUTPUT_MODEL_INFO == 1)
         DEBUG("Входы:");
@@ -302,14 +304,26 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
 
         DEBUG("Размерность:");
 
-        for (const auto& item : modelInfo->inputTensorsInfo) { LOG(item.shape); }
+        for (const auto& tensorInfo : modelInfo->inputTensorsInfo)
+        {
+            LOG(i, ":");
+
+            for (const auto& dim : tensorInfo.shape)
+            {
+                LOG(dim);
+            }
+        }
     #endif
 #endif
+
+    // Получение количества выходов.
 
     modelInfo->outputCount = handler.session->GetInputCount();
 
     for (std::size_t i = 0; i < modelInfo->outputCount; i++)
     {
+        Inference::TensorInfo tensorInfo = {};
+
         // Получение информации о типе выходов.
 
         tensorInfo.typeInfo = handler.session->GetInputTypeInfo(i);
@@ -320,11 +334,11 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
 
         tensorInfo.shape = tensorInfo.tensorTypeAndShapeInfo.GetShape();
 
-        modelInfo->outputTensorsInfo.push_back(tensorInfo);
+        modelInfo->outputTensorsInfo.push_back(std::move(tensorInfo));
     }
 
 #ifndef NDEBUG
-    // Вывод информации о модели.
+    // Вывод информации о выходах.
 
     #if (CUSTOM_CONFIGURATION_TURN_ON_OUTPUT_MODEL_INFO == 1)
         DEBUG("Выходы:");
@@ -332,7 +346,17 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
 
         DEBUG("Размерность:");
 
-        for (const auto& item : modelInfo->outputTensorsInfo) { LOG(item.shape); }
+        i = 0;
+
+        for (const auto& tensorInfo : modelInfo->outputTensorsInfo)
+        {
+            LOG(i, ":");
+
+            for (const auto& dim : tensorInfo.shape)
+            {
+                LOG(dim);
+            }
+        }
     #endif
 #endif
 

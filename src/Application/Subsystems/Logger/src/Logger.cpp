@@ -14,9 +14,9 @@ Logger::Logger()
     init();
 }
 
-    /// @brief Инициализация подсистемы.
-    void Logger::init()
-    {
-        subsystemHandle.id   = SubsystemId::Logger;
-        subsystemHandle.name = "Logger";
-    }
+/// @brief Инициализация подсистемы.
+void Logger::init()
+{
+    subsystemHandle.id   = SubsystemId::Logger;
+    subsystemHandle.name = "Logger";
+}
