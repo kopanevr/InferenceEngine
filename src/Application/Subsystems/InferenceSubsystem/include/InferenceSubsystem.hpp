@@ -32,10 +32,6 @@ namespace Inference
     /// @brief Информация о тензоре.
     struct TensorInfo
     {
-        /// @brief Информация о типе.
-        Ort::TypeInfo typeInfo;
-        /// @brief Информация о типе и размерности тензора.
-        Ort::ConstTensorTypeAndShapeInfo tensorTypeAndShapeInfo;
         /// @brief Тип данных элементов.
         ONNXTensorElementDataType tensorElementDataType;
         /// @brief Размерность тензора.
@@ -43,17 +39,14 @@ namespace Inference
     };
 
     /// @brief
-    struct ModelInfo
+    struct ModelInfo final
     {
         /// @brief Количество входов.
         std::size_t inputCount;
-
         /// @brief Количество выходов.
         std::size_t outputCount;
-
         /// @brief Информация о входных тензорах.
         std::vector<TensorInfo> inputTensorsInfo;
-
         /// @brief Информация о выходных тензорах.
         std::vector<TensorInfo> outputTensorsInfo;
     };
@@ -63,12 +56,12 @@ namespace Inference
     {
         /// @brief Указатель на окружение.
         std::unique_ptr<Ort::Env> env;
-
         /// @brief Указатель на сессию.
         std::unique_ptr<Ort::Session> session;
     };
 
     /// @brief
+    /// @details
     /// @tparam T Тип сырых данных тензора.
     template <typename T>
     struct Tensor final
@@ -77,7 +70,6 @@ namespace Inference
         {
             /// @brief
             Ort::MemoryInfo info{nullptr};
-
             /// @brief Размерность тензора.
             std::vector<int64_t> shape;
         }

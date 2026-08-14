@@ -274,21 +274,21 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
 
     for (std::size_t i = 0; i < modelInfo->inputCount; i++)
     {
-        Inference::TensorInfo tensorInfo = {};
-
         // Получение информации о типе входов.
 
-        tensorInfo.typeInfo = handler.session->GetInputTypeInfo(i);
+        const auto typeInfo = handler.session->GetInputTypeInfo(i);
 
-        tensorInfo.tensorTypeAndShapeInfo = tensorInfo.typeInfo.GetTensorTypeAndShapeInfo();
+        const auto tensorTypeAndShapeInfo = typeInfo.GetTensorTypeAndShapeInfo();
+
+        Inference::TensorInfo tensorInfo = {};
 
         // Получение типов данных элементов тензора.
 
-        tensorInfo.tensorElementDataType = tensorInfo.tensorTypeAndShapeInfo.GetElementType();
+        tensorInfo.tensorElementDataType = tensorTypeAndShapeInfo.GetElementType();
 
         // Получение размерности тензора.
 
-        tensorInfo.shape = tensorInfo.tensorTypeAndShapeInfo.GetShape();
+        tensorInfo.shape = tensorTypeAndShapeInfo.GetShape();
 
         modelInfo->inputTensorsInfo.push_back(std::move(tensorInfo));
     }
@@ -299,40 +299,46 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
     size_t i = 0; // Индекс тензора.
 
     #if (CUSTOM_CONFIGURATION_TURN_ON_OUTPUT_MODEL_INFO == 1)
-        DEBUG("Входы:");
-        DEBUG("Количество:", modelInfo->inputCount);
-
-        DEBUG("Размерность:");
+        LOG("Входы:");
+        LOG("Количество:", modelInfo->inputCount);
 
         for (const auto& tensorInfo : modelInfo->inputTensorsInfo)
         {
             LOG(i, ":");
 
+            LOG("Размерность:");
+
             for (const auto& dim : tensorInfo.shape)
             {
                 LOG(dim);
             }
+
+            LOG("Тип элементов:", tensorInfo.tensorElementDataType);
         }
     #endif
 #endif
 
     // Получение количества выходов.
 
-    modelInfo->outputCount = handler.session->GetInputCount();
+    modelInfo->outputCount = handler.session->GetOutputCount();
 
     for (std::size_t i = 0; i < modelInfo->outputCount; i++)
     {
+        // Получение информации о типе входов.
+
+        const auto typeInfo = handler.session->GetOutputTypeInfo(i);
+
+        const auto tensorTypeAndShapeInfo = typeInfo.GetTensorTypeAndShapeInfo();
+
         Inference::TensorInfo tensorInfo = {};
 
-        // Получение информации о типе выходов.
+        // Получение типов данных элементов тензора.
 
-        tensorInfo.typeInfo = handler.session->GetInputTypeInfo(i);
-
-        tensorInfo.tensorTypeAndShapeInfo = tensorInfo.typeInfo.GetTensorTypeAndShapeInfo();
+        tensorInfo.tensorElementDataType = tensorTypeAndShapeInfo.GetElementType();
 
         // Получение размерности тензора.
 
-        tensorInfo.shape = tensorInfo.tensorTypeAndShapeInfo.GetShape();
+        tensorInfo.shape = tensorTypeAndShapeInfo.GetShape();
 
         modelInfo->outputTensorsInfo.push_back(std::move(tensorInfo));
     }
@@ -341,10 +347,8 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
     // Вывод информации о выходах.
 
     #if (CUSTOM_CONFIGURATION_TURN_ON_OUTPUT_MODEL_INFO == 1)
-        DEBUG("Выходы:");
-        DEBUG("Количество:", modelInfo->outputCount);
-
-        DEBUG("Размерность:");
+        LOG("Выходы:");
+        LOG("Количество:", modelInfo->outputCount);
 
         i = 0;
 
@@ -352,10 +356,14 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
         {
             LOG(i, ":");
 
+            LOG("Размерность:");
+
             for (const auto& dim : tensorInfo.shape)
             {
                 LOG(dim);
             }
+
+            LOG("Тип элементов:", tensorInfo.tensorElementDataType);
         }
     #endif
 #endif
