@@ -31,8 +31,8 @@ namespace Inference
     {
         /// @brief Тип данных элементов.
         ONNXTensorElementDataType tensorElementDataType;
-        /// @brief Размерность тензора.
-        std::vector<int64_t> shape;
+        /// @brief Указатель на размерность тензора.
+        std::shared_ptr<std::vector<int64_t>> shape;
     };
 
     /// @brief

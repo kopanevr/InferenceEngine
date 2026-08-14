@@ -286,7 +286,14 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
 
         // Получение размерности тензора.
 
-        tensorInfo.shape = tensorTypeAndShapeInfo.GetShape();
+        try
+        {
+            tensorInfo.shape = std::make_shared<std::vector<int64_t>>(tensorTypeAndShapeInfo.GetShape());
+        }
+        catch(const std::exception& e)
+        {
+            //
+        }
 
         modelInfo->inputTensorsInfo.push_back(std::move(tensorInfo));
     }
@@ -306,7 +313,7 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
 
             LOG("Размерность:");
 
-            for (const auto& dim : tensorInfo.shape)
+            for (const auto& dim : *tensorInfo.shape)
             {
                 LOG(dim);
             }
@@ -336,7 +343,14 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
 
         // Получение размерности тензора.
 
-        tensorInfo.shape = tensorTypeAndShapeInfo.GetShape();
+        try
+        {
+            tensorInfo.shape = std::make_shared<std::vector<int64_t>>(tensorTypeAndShapeInfo.GetShape());
+        }
+        catch(const std::exception& e)
+        {
+            //
+        }
 
         modelInfo->outputTensorsInfo.push_back(std::move(tensorInfo));
     }
@@ -356,7 +370,7 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
 
             LOG("Размерность:");
 
-            for (const auto& dim : tensorInfo.shape)
+            for (const auto& dim : *tensorInfo.shape)
             {
                 LOG(dim);
             }
@@ -388,7 +402,7 @@ bool InferenceSubsystem::createInputOutputTensors()
 
         //
 
-        tensor.metaData.shape = std::shared_ptr<std::vector<int64_t>>(&inferenceHandler.modelInfo->inputTensorsInfo.at(i).shape);
+        tensor.metaData.shape = inferenceHandler.modelInfo->inputTensorsInfo.at(i).shape;
 
         tensor.value = Ort::Value::CreateTensor(
             memoryInfo,
@@ -413,7 +427,7 @@ bool InferenceSubsystem::createInputOutputTensors()
 
         //
 
-        tensor.metaData.shape = std::shared_ptr<std::vector<int64_t>>(&inferenceHandler.modelInfo->outputTensorsInfo.at(i).shape);
+        tensor.metaData.shape = inferenceHandler.modelInfo->outputTensorsInfo.at(i).shape;
 
         tensor.value = Ort::Value::CreateTensor(
             memoryInfo,
