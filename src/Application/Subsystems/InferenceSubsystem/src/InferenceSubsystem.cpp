@@ -142,6 +142,8 @@ bool InferenceSubsystem::body()
         timerManager.start(timerToTimeSinceStartThread);
     }
 
+    //
+
     if (0)
     {
         timerManager.getElapsedTime(timerToTimeSinceStartThread);
@@ -181,19 +183,19 @@ void InferenceSubsystem::prepareBeforeStartInference()
 
     //
 
-    Ort::ThreadingOptions threadingOptions = {};
+    inferenceHandler.threadingOptions = std::unique_ptr<Ort::ThreadingOptions>(new Ort::ThreadingOptions());
 
     // Установка количества потоков внутри операции.
 
-    threadingOptions.SetGlobalIntraOpNumThreads(4);
+    inferenceHandler.threadingOptions->SetGlobalIntraOpNumThreads(4);
 
     // Установка количества потоков между операциями.
 
-    threadingOptions.SetGlobalInterOpNumThreads(1);
+    inferenceHandler.threadingOptions->SetGlobalInterOpNumThreads(1);
 
     // Создание окружения.
 
-    inferenceHandler.env = std::unique_ptr<Ort::Env>(new Ort::Env(threadingOptions, ORT_LOGGING_LEVEL_WARNING, "onnxInference"));
+    inferenceHandler.env = std::unique_ptr<Ort::Env>(new Ort::Env(*inferenceHandler.threadingOptions, ORT_LOGGING_LEVEL_WARNING, "onnxInference"));
 
     Ort::SessionOptions sessionOptions = {};
 
@@ -243,10 +245,6 @@ void InferenceSubsystem::prepareBeforeStartInference()
         inferenceHandler.session = std::unique_ptr<Ort::Session>(new Ort::Session(*inferenceHandler.env, modelLoader->getPathToModelFile(), sessionOptions));
 #endif
     }
-
-    // Получение информации о модели.
-
-    modelInfo = getModelInfo(inferenceHandler);
 
     // Создание входных и выходных тензоров.
 
@@ -375,45 +373,64 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
 /// @param
 bool InferenceSubsystem::createInputOutputTensors()
 {
-    // Создание входных и выходных тензоров.
+    // Получение информации о модели.
 
-    try
+    inferenceHandler.modelInfo = getModelInfo(inferenceHandler);
+
+
+    Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+
+    // Создание входных тензоров.
+
+    for (size_t i = 0; i < inferenceHandler.modelInfo->inputCount; i++)
     {
-       inputTensor = std::unique_ptr<Inference::Tensor<Inference::TensorRawDataType>>(new Inference::Tensor<Inference::TensorRawDataType>());
+        Inference::Tensor tensor = {};
+
+        //
+
+        tensor.metaData.shape = std::shared_ptr<std::vector<int64_t>>(&inferenceHandler.modelInfo->inputTensorsInfo.at(i).shape);
+
+        tensor.value = Ort::Value::CreateTensor(
+            memoryInfo,
+
+            static_cast<void*>(tensor.rawData.data()),
+            tensor.rawData.size(),
+
+            tensor.metaData.shape->data(),
+            tensor.metaData.shape->size(),
+
+            inferenceHandler.modelInfo->inputTensorsInfo.at(i).tensorElementDataType
+        );
+
+        inferenceHandler.inputTensors.push_back(std::move(tensor));
     }
-    catch(const std::exception& e)
+
+    // Создание выходных тензоров.
+
+    for (size_t i = 0; i < inferenceHandler.modelInfo->outputCount; i++)
     {
-        return 1;
+        Inference::Tensor tensor = {};
+
+        //
+
+        tensor.metaData.shape = std::shared_ptr<std::vector<int64_t>>(&inferenceHandler.modelInfo->outputTensorsInfo.at(i).shape);
+
+        tensor.value = Ort::Value::CreateTensor(
+            memoryInfo,
+
+            static_cast<void*>(tensor.rawData.data()),
+            tensor.rawData.size(),
+
+            tensor.metaData.shape->data(),
+            tensor.metaData.shape->size(),
+
+            inferenceHandler.modelInfo->inputTensorsInfo.at(i).tensorElementDataType
+        );
+
+        inferenceHandler.outputTensors.push_back(std::move(tensor));
     }
-
-    try
-    {
-       outputTensor = std::unique_ptr<Inference::Tensor<Inference::TensorRawDataType>>(new Inference::Tensor<Inference::TensorRawDataType>());
-    }
-    catch(const std::exception& e)
-    {
-        return 1;
-    }
-
-    // Описание входных и выходных тензоров.
-
-    for (size_t i = 0; i < modelInfo->inputCount; i++)
-    {
-
-    }
-
 
     // Описание входных тензоров.
-
-    inputTensor->value = Ort::Value::CreateTensor<Inference::TensorRawDataType>(
-        inputTensor->metaData.info,
-
-        inputTensor->rawData.data(),
-        inputTensor->rawData.size(),
-
-        inputTensor->metaData.shape.data(),
-        inputTensor->metaData.shape.size()
-    );
 
     return 0;
 }

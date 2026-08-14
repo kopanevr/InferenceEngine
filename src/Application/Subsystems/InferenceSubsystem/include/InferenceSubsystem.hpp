@@ -26,11 +26,8 @@
 
 namespace Inference
 {
-    /// @brief
-    using TensorRawDataType = double;
-
     /// @brief Информация о тензоре.
-    struct TensorInfo
+    struct TensorInfo final
     {
         /// @brief Тип данных элементов.
         ONNXTensorElementDataType tensorElementDataType;
@@ -51,36 +48,43 @@ namespace Inference
         std::vector<TensorInfo> outputTensorsInfo;
     };
 
-    /// @brief Дескриптор вывода.
-    struct InferenceHandler final
-    {
-        /// @brief Указатель на окружение.
-        std::unique_ptr<Ort::Env> env;
-        /// @brief Указатель на сессию.
-        std::unique_ptr<Ort::Session> session;
-    };
-
-    /// @brief
+    /// @brief Тензор.
     /// @details
-    /// @tparam T Тип сырых данных тензора.
-    template <typename T>
     struct Tensor final
     {
-        struct MetaData
+        struct MetaData final
         {
             /// @brief
-            Ort::MemoryInfo info{nullptr};
-            /// @brief Размерность тензора.
-            std::vector<int64_t> shape;
+            Ort::MemoryInfo memoryInfo{nullptr};
+            /// @brief Указатель на размерность тензора.
+            std::shared_ptr<std::vector<int64_t>> shape;
         }
         metaData;
 
         /// @brief Сырые данные тензора.
-        std::vector<T> rawData;
+        std::vector<std::byte> rawData;
 
         /// @brief  Тензор.
         Ort::Value value{nullptr};
     };
+
+    /// @brief Дескриптор вывода.
+    struct InferenceHandler final
+    {
+        /// @brief Указатель на параметры пулов потоков.
+        std::unique_ptr<Ort::ThreadingOptions> threadingOptions;
+        /// @brief Указатель на окружение.
+        std::unique_ptr<Ort::Env> env;
+        /// @brief Указатель на сессию.
+        std::unique_ptr<Ort::Session> session;
+        /// @brief Указатель на информацию о модели.
+        std::unique_ptr<Inference::ModelInfo> modelInfo;
+        /// @brief Входные тензоры.
+        std::vector<Inference::Tensor> inputTensors;
+        /// @brief Выходные тензоры.
+        std::vector<Inference::Tensor> outputTensors;
+    };
+
 } // namespace Inference
 
 class ModelLoader;
@@ -100,14 +104,6 @@ private:
 
     /// @brief Дескриптор вывода.
     Inference::InferenceHandler inferenceHandler;
-
-    /// @brief Указатель на информацию о модели.
-    std::unique_ptr<Inference::ModelInfo> modelInfo;
-
-    /// @brief Указатель на входной буфер.
-    std::unique_ptr<Inference::Tensor<Inference::TensorRawDataType>> inputTensor;
-    /// @brief Указатель на выходной буфер.
-    std::unique_ptr<Inference::Tensor<Inference::TensorRawDataType>> outputTensor;
 private:
     /// @brief Конструктор.
     InferenceSubsystem();
