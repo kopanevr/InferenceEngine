@@ -22,6 +22,10 @@
 
 //
 
+using namespace Inference;
+
+//
+
 /// @brief Конструктор.
 InferenceSubsystem::InferenceSubsystem()
 {
@@ -168,8 +172,24 @@ bool InferenceSubsystem::body()
     return true;
 }
 
+namespace Inference
+{
+    namespace PrepareOptions
+    {
+        const uint8_t Reprepare = 1u; // Переподготовка.
+
+        /*
+
+        const uint8_t = 2u;
+
+        */
+    }// namespace PrepareOptions
+} // namespace Inference
+
 /// @brief Подготовка перед запуском вывода.
-void InferenceSubsystem::prepareBeforeStartInference()
+/// @warning
+/// @param options Опции.
+void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
 {
     STATIC_BIT_FIELD(
         0, // Идентификатор битового поля.
@@ -178,6 +198,7 @@ void InferenceSubsystem::prepareBeforeStartInference()
         //
 
         FLAG(isCompleted)
+        FLAG(isErrorAppeared)
 
         //
 
@@ -185,13 +206,27 @@ void InferenceSubsystem::prepareBeforeStartInference()
 
     //
 
+    // Обработка флагов.
+
+    // Переподготовка.
+
+    if (options & PrepareOptions::Reprepare)
+    {
+        // Стирание битового поля.
+
+        if (GET_BIT_FIELD(0).isCompleted)
+        {
+            ERASE_BIT_FIELD(0);
+
+            //
+        }
+    }
+
     if (GET_BIT_FIELD(0).isCompleted) { return; }
 
     //
 
     INFO("Запуск подготовки перед выводом");
-
-    //
 
     inferenceHandler.threadingOptions = std::unique_ptr<Ort::ThreadingOptions>(new Ort::ThreadingOptions());
 
@@ -260,18 +295,27 @@ void InferenceSubsystem::prepareBeforeStartInference()
 
     if (!createInputOutputTensors())
     {
+        ERROR("Ошибка при создании входных и выходных тензоров");
+
+        GET_BIT_FIELD_NAME(0).isErrorAppeared = true;
+    }
+
+    GET_BIT_FIELD(0).isCompleted = true;
+
+    if (GET_BIT_FIELD_NAME(0).isErrorAppeared)
+    {
         WARNING("Подготовка перед выводом не была завершена");
 
-        return;
+        // Стирание битового поля.
+
+        ERASE_BIT_FIELD(0);
+
+        return ;
     }
 
     //
 
     INFO("Подготовка перед выводом была завершена");
-
-    //
-
-    GET_BIT_FIELD(0).isCompleted = true;
 }
 
 /// @brief Получение информации о модели.

@@ -146,7 +146,9 @@ private:
     bool body();
 
     /// @brief Подготовка перед запуском вывода.
-    void prepareBeforeStartInference();
+    /// @warning
+    /// @param options Опции.
+    void prepareBeforeStartInference(uint8_t options = {});
 
     /// @brief Получение информации о модели.
     /// @param handler Дескриптор вывода.
