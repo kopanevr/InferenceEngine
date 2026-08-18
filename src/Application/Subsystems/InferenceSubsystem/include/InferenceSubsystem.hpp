@@ -33,6 +33,8 @@ namespace Inference
         ONNXTensorElementDataType tensorElementDataType;
         /// @brief Указатель на размерность тензора.
         std::shared_ptr<std::vector<int64_t>> shape;
+        /// @brief Имя.
+        char* name;
     };
 
     /// @brief
@@ -85,6 +87,19 @@ namespace Inference
         std::vector<Inference::Tensor> inputTensors;
         /// @brief Выходные тензоры.
         std::vector<Inference::Tensor> outputTensors;
+
+        /// @brief Сброс.
+        void reset()
+        {
+            inputTensors.clear();
+            outputTensors.clear();
+
+            threadingOptions.reset();
+            env.reset();
+            sessionOptions.reset();
+            session.reset();
+            modelInfo.reset();
+        }
     };
 
 #ifndef NDEBUG
@@ -157,6 +172,9 @@ private:
     /// @brief Создание входных и выходных тензоров.
     /// @param
     bool createInputOutputTensors();
+
+    /// @brief
+    void reset();
 public:
     /// @brief Деструктор.
     ~InferenceSubsystem();

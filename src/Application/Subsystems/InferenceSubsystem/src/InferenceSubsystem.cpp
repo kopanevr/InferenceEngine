@@ -139,7 +139,7 @@ bool InferenceSubsystem::body()
 
     static Timer timerToTimeSinceStartThread(0u);
 
-    static std::chrono::steady_clock::duration start = {}; // Продолжительность для отсчета времени вывода.
+    static std::chrono::steady_clock::duration start = {}; // Продолжительность для отсчета времени.
 
     // Запуск таймера для отсчета периода времени с момента запуска потока.
 
@@ -152,7 +152,14 @@ bool InferenceSubsystem::body()
 
     //
 
-
+    inferenceHandler.session->Run(
+            Ort::RunOptions{{}},
+            &inferenceHandler.modelInfo->inputTensorsInfo.at(0).name,
+            &inferenceHandler.inputTensors.at(0).value,
+            1u,
+            &inferenceHandler.modelInfo->outputTensorsInfo.at(0).name,
+            1u
+        );
 
     //
 
@@ -174,21 +181,21 @@ bool InferenceSubsystem::body()
 
 namespace Inference
 {
-    namespace PrepareOptions
+    namespace PrepareSettings
     {
         const uint8_t Reprepare = 1u; // Переподготовка.
 
         /*
 
-        const uint8_t = 2u;
+        const uint8_t Option = 2u;
 
         */
-    }// namespace PrepareOptions
+    }// namespace PrepareSettings
 } // namespace Inference
 
 /// @brief Подготовка перед запуском вывода.
-/// @warning
-/// @param options Опции.
+/// @warning При @ref Inference::PrepareSettings::Reprepare происходит стирание @ref Inference::InferenceHandler, если подготовка была произведена.
+/// @param options Опции. Дополнительно смотреть @ref Inference::PrepareSettings.
 void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
 {
     STATIC_BIT_FIELD(
@@ -210,7 +217,7 @@ void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
 
     // Переподготовка.
 
-    if (options & PrepareOptions::Reprepare)
+    if (options & PrepareSettings::Reprepare)
     {
         // Стирание битового поля.
 
@@ -219,6 +226,8 @@ void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
             ERASE_BIT_FIELD(0);
 
             //
+
+            reset();
         }
     }
 
@@ -304,18 +313,20 @@ void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
 
     if (GET_BIT_FIELD_NAME(0).isErrorAppeared)
     {
-        WARNING("Подготовка перед выводом не была завершена");
+        WARNING("Подготовка перед выводом не была завершена c ошибками");
 
         // Стирание битового поля.
 
         ERASE_BIT_FIELD(0);
 
-        return ;
+        return;
     }
-
-    //
-
-    INFO("Подготовка перед выводом была завершена");
+#if (1)
+    else
+    {
+        WARNING("Подготовка перед выводом не была завершена без ошибок");
+    }
+#endif
 }
 
 /// @brief Получение информации о модели.
@@ -324,6 +335,8 @@ void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
 std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inference::InferenceHandler& handler)
 {
     std::unique_ptr<Inference::ModelInfo> modelInfo = std::unique_ptr<Inference::ModelInfo>(new Inference::ModelInfo());
+
+    Ort::AllocatorWithDefaultOptions allocator{{}};
 
     // Получение количества входов.
 
@@ -337,7 +350,13 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
 
         const auto tensorTypeAndShapeInfo = typeInfo.GetTensorTypeAndShapeInfo();
 
+        // Получение имен входов.
+
+        const auto allocatedString = handler.session->GetInputNameAllocated(i, allocator);
+
         Inference::TensorInfo tensorInfo = {};
+
+        tensorInfo.name = allocatedString.get();
 
         // Получение типов данных элементов тензора.
 
@@ -368,14 +387,18 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
 
         for (const auto& tensorInfo : modelInfo->inputTensorsInfo)
         {
-            LOG(i, ":");
-
+            LOG(i++, ":");
+            LOG("Имя", tensorInfo.name);
             LOG("Размерность:");
+
+            LOG("[");
 
             for (const auto& dim : *tensorInfo.shape)
             {
-                LOG(dim);
+                LOG(" ", dim);
             }
+
+            LOG("]");
 
             LOG("Тип элементов:", tensorInfo.tensorElementDataType);
         }
@@ -394,7 +417,13 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
 
         const auto tensorTypeAndShapeInfo = typeInfo.GetTensorTypeAndShapeInfo();
 
+        // Получение имен входов.
+
+        const auto allocatedString = handler.session->GetOutputNameAllocated(i, allocator);
+
         Inference::TensorInfo tensorInfo = {};
+
+        tensorInfo.name = allocatedString.get();
 
         // Получение типов данных элементов тензора.
 
@@ -425,14 +454,18 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
 
         for (const auto& tensorInfo : modelInfo->outputTensorsInfo)
         {
-            LOG(i, ":");
-
+            LOG(i++, ":");
+            LOG("Имя", tensorInfo.name);
             LOG("Размерность:");
+
+            LOG("[");
 
             for (const auto& dim : *tensorInfo.shape)
             {
-                LOG(dim);
+                LOG(" ", dim);
             }
+
+            LOG("]");
 
             LOG("Тип элементов:", tensorInfo.tensorElementDataType);
         }
@@ -503,6 +536,12 @@ bool InferenceSubsystem::createInputOutputTensors()
     }
 
     return 0;
+}
+
+/// @brief
+void InferenceSubsystem::reset()
+{
+    inferenceHandler.reset();
 }
 
 /// @brief Устанавливает путь к директории модели.
