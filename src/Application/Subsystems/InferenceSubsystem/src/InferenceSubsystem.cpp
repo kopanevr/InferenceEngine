@@ -100,8 +100,6 @@ int InferenceSubsystem::processBody()
         }
 
         GET_BIT_FIELD(0).isStarted = true;
-
-        DEBUG("Подсистема", subsystemHandle.name, "запущена");
     }
     else
     {
@@ -125,21 +123,37 @@ int InferenceSubsystem::processBody()
 /// @brief
 void InferenceSubsystem::run()
 {
+    DEBUG("Подсистема", subsystemHandle.name, "запущена");
+
     while (true)
     {
         if (!body()) { break; }
     }
+
+    DEBUG("Подсистема", subsystemHandle.name, "");
 }
 
 /// @brief
 /// @return
 bool InferenceSubsystem::body()
 {
-    // Таймер для отсчета периода времени с момента запуска потока.
+    STATIC_BIT_FIELD(
+        0, // Идентификатор битового поля.
+        1, // Ожидаемый размер битового поля в байт.
 
-    static Timer timerToTimeSinceStartThread(0u);
+        //
+
+        FLAG(isStarted)
+
+        //
+
+        ); // Статическое битовое поле.
+
+    static Timer timerToTimeSinceStartThread(0u); // Таймер для отсчета периода времени с момента запуска потока.
 
     static std::chrono::steady_clock::duration start = {}; // Продолжительность для отсчета времени.
+
+    std::vector<Ort::Value> outputValues; // Выходные значения.
 
     // Запуск таймера для отсчета периода времени с момента запуска потока.
 
@@ -152,7 +166,7 @@ bool InferenceSubsystem::body()
 
     //
 
-    inferenceHandler.session->Run(
+    outputValues = inferenceHandler.session->Run(
             Ort::RunOptions{{}},
             &inferenceHandler.modelInfo->inputTensorsInfo.at(0).name,
             &inferenceHandler.inputTensors.at(0).value,
@@ -223,11 +237,9 @@ void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
 
         if (GET_BIT_FIELD(0).isCompleted)
         {
-            ERASE_BIT_FIELD(0);
-
-            //
-
             reset();
+
+            ERASE_BIT_FIELD(0);
         }
     }
 
@@ -313,7 +325,9 @@ void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
 
     if (GET_BIT_FIELD_NAME(0).isErrorAppeared)
     {
-        WARNING("Подготовка перед выводом не была завершена c ошибками");
+        WARNING("Подготовка перед выводом была завершена c ошибками");
+
+        reset();
 
         // Стирание битового поля.
 
@@ -324,7 +338,7 @@ void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
 #if (1)
     else
     {
-        WARNING("Подготовка перед выводом не была завершена без ошибок");
+        WARNING("Подготовка перед выводом была завершена без ошибок");
     }
 #endif
 }
