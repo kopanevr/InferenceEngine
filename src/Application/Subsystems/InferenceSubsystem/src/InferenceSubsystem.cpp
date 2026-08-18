@@ -153,8 +153,6 @@ bool InferenceSubsystem::body()
 
     static std::chrono::steady_clock::duration start = {}; // Продолжительность для отсчета времени.
 
-    std::vector<Ort::Value> outputValues; // Выходные значения.
-
     // Запуск таймера для отсчета периода времени с момента запуска потока.
 
     if (timerManager.isStopped(timerToTimeSinceStartThread))
@@ -166,12 +164,19 @@ bool InferenceSubsystem::body()
 
     //
 
-    outputValues = inferenceHandler.session->Run(
+    inferenceHandler.session->Run(
             Ort::RunOptions{{}},
+
+            // Входы.
+
             &inferenceHandler.modelInfo->inputTensorsInfo.at(0).name,
             &inferenceHandler.inputTensors.at(0).value,
             1u,
+
+            // Выходы.
+
             &inferenceHandler.modelInfo->outputTensorsInfo.at(0).name,
+            &inferenceHandler.outputTensors.at(0).value,
             1u
         );
 
