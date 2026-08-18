@@ -58,6 +58,16 @@ public:
         }
     }
 
+    /// @brief Сброс таймера.
+    /// @param timer Таймер.
+    void reset(Timer& timer)
+    {
+        if (timer.isStarted)
+        {
+            timer.start = std::chrono::steady_clock::now();
+        }
+    }
+
     /// @brief Проверка запуска таймера.
     /// @return Состояние запуска таймера.
     /// @param timer Таймер.

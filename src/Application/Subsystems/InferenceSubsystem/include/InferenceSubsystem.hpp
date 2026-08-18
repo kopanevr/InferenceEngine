@@ -75,6 +75,8 @@ namespace Inference
         std::unique_ptr<Ort::ThreadingOptions> threadingOptions;
         /// @brief Указатель на окружение.
         std::unique_ptr<Ort::Env> env;
+        /// @brief Указатель на параметры сессии.
+        std::unique_ptr<Ort::SessionOptions> sessionOptions;
         /// @brief Указатель на сессию.
         std::unique_ptr<Ort::Session> session;
         /// @brief Указатель на информацию о модели.
@@ -85,6 +87,16 @@ namespace Inference
         std::vector<Inference::Tensor> outputTensors;
     };
 
+#ifndef NDEBUG
+    /// @brief
+    struct Profiler
+    {
+        /// @brief Период вывода.
+        std::chrono::steady_clock::duration inferencePeriod;
+        /// @brief Частота.
+        uint16_t rate;
+    };
+#endif
 } // namespace Inference
 
 class ModelLoader;
@@ -104,6 +116,11 @@ private:
 
     /// @brief Дескриптор вывода.
     Inference::InferenceHandler inferenceHandler;
+
+#ifndef NDEBUG
+    /// @brief Профилировщик.
+    Inference::Profiler profiler;
+#endif
 private:
     /// @brief Конструктор.
     InferenceSubsystem();

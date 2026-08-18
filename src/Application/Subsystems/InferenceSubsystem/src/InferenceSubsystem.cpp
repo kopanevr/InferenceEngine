@@ -135,6 +135,8 @@ bool InferenceSubsystem::body()
 
     static Timer timerToTimeSinceStartThread(0u);
 
+    static std::chrono::steady_clock::duration start = {}; // Продолжительность для отсчета времени вывода.
+
     // Запуск таймера для отсчета периода времени с момента запуска потока.
 
     if (timerManager.isStopped(timerToTimeSinceStartThread))
@@ -142,7 +144,15 @@ bool InferenceSubsystem::body()
         timerManager.start(timerToTimeSinceStartThread);
     }
 
+    start = timerManager.getElapsedTime(timerToTimeSinceStartThread);
+
     //
+
+
+
+    //
+
+    profiler.inferencePeriod = timerManager.getElapsedTime(timerToTimeSinceStartThread) - start;
 
     if (0)
     {
@@ -197,9 +207,9 @@ void InferenceSubsystem::prepareBeforeStartInference()
 
     inferenceHandler.env = std::unique_ptr<Ort::Env>(new Ort::Env(*inferenceHandler.threadingOptions, ORT_LOGGING_LEVEL_WARNING, "onnxInference"));
 
-    Ort::SessionOptions sessionOptions = {};
+    inferenceHandler.sessionOptions = std::unique_ptr<Ort::SessionOptions>(new Ort::SessionOptions());
 
-    sessionOptions.DisablePerSessionThreads();
+    inferenceHandler.sessionOptions->DisablePerSessionThreads();
 
     // Проверка наличия оптимизированной модели.
 
@@ -213,7 +223,7 @@ void InferenceSubsystem::prepareBeforeStartInference()
     {
         // Создание сессии.
 
-        inferenceHandler.session = std::unique_ptr<Ort::Session>(new Ort::Session(*inferenceHandler.env, pathToOptimizedModelFile, sessionOptions));
+        inferenceHandler.session = std::unique_ptr<Ort::Session>(new Ort::Session(*inferenceHandler.env, pathToOptimizedModelFile, *inferenceHandler.sessionOptions));
     }
     else
     {
@@ -221,13 +231,13 @@ void InferenceSubsystem::prepareBeforeStartInference()
 
         // Установка уровня оптимизации модели.
 
-        sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
+        inferenceHandler.sessionOptions->SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
 
         DEBUG("Создание сессии...");
 
         // Установка пути к файлу оптимизированной модели.
 
-        sessionOptions.SetOptimizedModelFilePath("");
+        inferenceHandler.sessionOptions->SetOptimizedModelFilePath("");
 
         // Создание сессии.
 
@@ -240,19 +250,24 @@ void InferenceSubsystem::prepareBeforeStartInference()
 
         DEBUG("Путь к файлу модели:", pathToModelFile);
 
-        inferenceHandler.session = std::unique_ptr<Ort::Session>(new Ort::Session(*inferenceHandler.env, pathToModelFile, sessionOptions));
+        inferenceHandler.session = std::unique_ptr<Ort::Session>(new Ort::Session(*inferenceHandler.env, pathToModelFile, *inferenceHandler.sessionOptions));
 #else
-        inferenceHandler.session = std::unique_ptr<Ort::Session>(new Ort::Session(*inferenceHandler.env, modelLoader->getPathToModelFile(), sessionOptions));
+        inferenceHandler.session = std::unique_ptr<Ort::Session>(new Ort::Session(*inferenceHandler.env, modelLoader->getPathToModelFile(), *inferenceHandler.sessionOptions));
 #endif
     }
 
     // Создание входных и выходных тензоров.
 
-    if (createInputOutputTensors()) { return; }
+    if (!createInputOutputTensors())
+    {
+        WARNING("Подготовка перед выводом не была завершена");
+
+        return;
+    }
 
     //
 
-    INFO("Подготовка перед выводом завершена");
+    INFO("Подготовка перед выводом была завершена");
 
     //
 
@@ -391,7 +406,6 @@ bool InferenceSubsystem::createInputOutputTensors()
 
     inferenceHandler.modelInfo = getModelInfo(inferenceHandler);
 
-
     Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
 
     // Создание входных тензоров.
@@ -410,8 +424,8 @@ bool InferenceSubsystem::createInputOutputTensors()
             static_cast<void*>(tensor.rawData.data()),
             tensor.rawData.size(),
 
-            tensor.metaData.shape->data(),
-            tensor.metaData.shape->size(),
+            tensor.metaData.shape->data(), // Указатель на размерность тензора.
+            tensor.metaData.shape->size(), //
 
             inferenceHandler.modelInfo->inputTensorsInfo.at(i).tensorElementDataType
         );
@@ -435,16 +449,14 @@ bool InferenceSubsystem::createInputOutputTensors()
             static_cast<void*>(tensor.rawData.data()),
             tensor.rawData.size(),
 
-            tensor.metaData.shape->data(),
-            tensor.metaData.shape->size(),
+            tensor.metaData.shape->data(), // Указатель на размерность тензора.
+            tensor.metaData.shape->size(), //
 
             inferenceHandler.modelInfo->inputTensorsInfo.at(i).tensorElementDataType
         );
 
         inferenceHandler.outputTensors.push_back(std::move(tensor));
     }
-
-    // Описание входных тензоров.
 
     return 0;
 }
