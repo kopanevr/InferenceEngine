@@ -7,6 +7,7 @@
 
 //
 
+#include <string>
 #include <memory>
 #include <thread>
 
@@ -34,7 +35,7 @@ namespace Inference
         /// @brief Указатель на размерность тензора.
         std::shared_ptr<std::vector<int64_t>> shape;
         /// @brief Имя.
-        char* name;
+        std::string name;
     };
 
     /// @brief
@@ -87,6 +88,11 @@ namespace Inference
         std::vector<Inference::Tensor> inputTensors;
         /// @brief Выходные тензоры.
         std::vector<Inference::Tensor> outputTensors;
+
+        /// @brief Имена входных тензоров.
+        std::vector<const char*> inputTensorNames;
+        /// @brief Имена выходных тензоров.
+        std::vector<const char*> outputTensorNames;
 
         /// @brief Сброс.
         void reset()

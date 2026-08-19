@@ -169,13 +169,13 @@ bool InferenceSubsystem::body()
 
             // Входы.
 
-            &inferenceHandler.modelInfo->inputTensorsInfo.at(0).name,
+            inferenceHandler.inputTensorNames.data(),
             &inferenceHandler.inputTensors.at(0).value,
             1u,
 
             // Выходы.
 
-            &inferenceHandler.modelInfo->outputTensorsInfo.at(0).name,
+            inferenceHandler.outputTensorNames.data(),
             &inferenceHandler.outputTensors.at(0).value,
             1u
         );
@@ -348,6 +348,24 @@ void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
 #endif
 }
 
+#ifndef NDEBUG
+    /// @brief
+    #define PRINT_TENSOR_SHAPE(tensorInfo) \
+        do \
+        { \
+            LOG("Размерность:"); \
+            LOG("["); \
+            for (const auto& dim : *tensorInfo.shape) \
+            { \
+                dim != tensorInfo.shape->back() \
+                    ? LOG(" ", dim, ",") \
+                    : LOG(" ", dim); \
+            } \
+            LOG("]"); \
+        } \
+        while(0)
+#endif
+
 /// @brief Получение информации о модели.
 /// @param handler Дескриптор вывода.
 /// @return Информация о модели.
@@ -371,11 +389,11 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
 
         // Получение имен входов.
 
-        const auto allocatedString = handler.session->GetInputNameAllocated(i, allocator);
+        inferenceHandler.modelInfo->inputTensorsInfo.at(i).name = handler.session->GetOutputNameAllocated(i, allocator).get();
+
+        inferenceHandler.inputTensorNames.push_back(inferenceHandler.modelInfo->inputTensorsInfo.at(i).name.c_str());
 
         Inference::TensorInfo tensorInfo = {};
-
-        tensorInfo.name = allocatedString.get();
 
         // Получение типов данных элементов тензора.
 
@@ -408,16 +426,8 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
         {
             LOG(i++, ":");
             LOG("Имя", tensorInfo.name);
-            LOG("Размерность:");
 
-            LOG("[");
-
-            for (const auto& dim : *tensorInfo.shape)
-            {
-                LOG(" ", dim);
-            }
-
-            LOG("]");
+            PRINT_TENSOR_SHAPE(tensorInfo); // Смотреть выше.
 
             LOG("Тип элементов:", tensorInfo.tensorElementDataType);
         }
@@ -438,11 +448,11 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
 
         // Получение имен входов.
 
-        const auto allocatedString = handler.session->GetOutputNameAllocated(i, allocator);
+        inferenceHandler.modelInfo->outputTensorsInfo.at(i).name = handler.session->GetOutputNameAllocated(i, allocator).get();
+
+        inferenceHandler.outputTensorNames.push_back(inferenceHandler.modelInfo->outputTensorsInfo.at(i).name.c_str());
 
         Inference::TensorInfo tensorInfo = {};
-
-        tensorInfo.name = allocatedString.get();
 
         // Получение типов данных элементов тензора.
 
@@ -475,16 +485,8 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
         {
             LOG(i++, ":");
             LOG("Имя", tensorInfo.name);
-            LOG("Размерность:");
 
-            LOG("[");
-
-            for (const auto& dim : *tensorInfo.shape)
-            {
-                LOG(" ", dim);
-            }
-
-            LOG("]");
+            PRINT_TENSOR_SHAPE(tensorInfo); // Смотреть выше.
 
             LOG("Тип элементов:", tensorInfo.tensorElementDataType);
         }
@@ -493,6 +495,8 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
 
     return modelInfo;
 }
+
+#undef PRINT_TENSOR_SHAPE
 
 /// @brief Создание входных и выходных тензоров.
 /// @param
@@ -514,17 +518,28 @@ bool InferenceSubsystem::createInputOutputTensors()
 
         tensor.metaData.shape = inferenceHandler.modelInfo->inputTensorsInfo.at(i).shape;
 
-        tensor.value = Ort::Value::CreateTensor(
-            memoryInfo,
+        assert(inferenceHandler.modelInfo->inputTensorsInfo.empty());
 
-            static_cast<void*>(tensor.rawData.data()),
-            tensor.rawData.size(),
+        assert(i <= inferenceHandler.modelInfo->inputTensorsInfo.size());
 
-            tensor.metaData.shape->data(), // Указатель на размерность тензора.
-            tensor.metaData.shape->size(), //
+        if (!inferenceHandler.modelInfo->inputTensorsInfo.empty() && i <= inferenceHandler.modelInfo->inputTensorsInfo.size())
+        {
+            tensor.value = Ort::Value::CreateTensor(
+                memoryInfo,
 
-            inferenceHandler.modelInfo->inputTensorsInfo.at(i).tensorElementDataType
-        );
+                static_cast<void*>(tensor.rawData.data()),
+                tensor.rawData.size(),
+
+                tensor.metaData.shape->data(), // Указатель на размерность тензора.
+                tensor.metaData.shape->size(), //
+
+                inferenceHandler.modelInfo->inputTensorsInfo[i].tensorElementDataType
+            );
+        }
+        else
+        {
+            return 1;
+        }
 
         inferenceHandler.inputTensors.push_back(std::move(tensor));
     }
@@ -539,17 +554,28 @@ bool InferenceSubsystem::createInputOutputTensors()
 
         tensor.metaData.shape = inferenceHandler.modelInfo->outputTensorsInfo.at(i).shape;
 
-        tensor.value = Ort::Value::CreateTensor(
-            memoryInfo,
+        assert(!inferenceHandler.modelInfo->outputTensorsInfo.empty());
 
-            static_cast<void*>(tensor.rawData.data()),
-            tensor.rawData.size(),
+        assert(i <= inferenceHandler.modelInfo->outputTensorsInfo.size());
 
-            tensor.metaData.shape->data(), // Указатель на размерность тензора.
-            tensor.metaData.shape->size(), //
+        if (!inferenceHandler.modelInfo->outputTensorsInfo.empty() && i <= inferenceHandler.modelInfo->outputTensorsInfo.size())
+        {
+            tensor.value = Ort::Value::CreateTensor(
+                memoryInfo,
 
-            inferenceHandler.modelInfo->inputTensorsInfo.at(i).tensorElementDataType
-        );
+                static_cast<void*>(tensor.rawData.data()),
+                tensor.rawData.size(),
+
+                tensor.metaData.shape->data(), // Указатель на размерность тензора.
+                tensor.metaData.shape->size(), //
+
+                inferenceHandler.modelInfo->outputTensorsInfo[i].tensorElementDataType
+            );
+        }
+        else
+        {
+            return 1;
+        }
 
         inferenceHandler.outputTensors.push_back(std::move(tensor));
     }
