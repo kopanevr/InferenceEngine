@@ -172,6 +172,8 @@ bool InferenceSubsystem::body()
 
     //
 
+    // Запуск конвейера.
+
     pipeline();
 
     //
@@ -192,36 +194,62 @@ bool InferenceSubsystem::body()
     return true;
 }
 
-/// @brief
+#define PROCESS(process) \
+    if (!process()) \
+    { \
+        SET_FLAG(0, isErrorAppeared); \
+        break; \
+    } \
+    step++;
+
+/// @brief Конвейер.
 void InferenceSubsystem::pipeline()
 {
-    enum class Step : uint8_t
-    {
-        prepareInputTensors,
-        inference,
-        prepareOutputTensors,
+    STATIC_BIT_FIELD(
+        0, // Идентификатор битового поля.
+        1, // Ожидаемый размер битового поля в байт.
 
-        Count
-    };
+        //
 
-    Step step = Step::Count;
+        FLAG(isStarted)
+        FLAG(isErrorAppeared)
+
+        //
+
+        ); // Статическое битовое поле.
+
+    uint8_t step = {};
+
+    //
 
     switch (step)
     {
-    case Step::prepareInputTensors:
-        prepareInputTensors();
-        break;
-    case Step::inference:
-        inference();
-        break;
-    case Step::prepareOutputTensors:
-        prepareOutputTensors();
-        break;
+    case 0u:
+        PROCESS(prepareInputTensors)
+    case 1u:
+        PROCESS(inference)
+    case 2U:
+        PROCESS(prepareOutputTensors)
 
     default:
         break;
     }
+
+    //
+
+    if (GET_FLAG_STATE(0, isErrorAppeared))
+    {
+#ifndef NDEBUG
+        DEBUG("Ошибка произошла на этапе:", step);
+
+        //
+#endif
+
+        return;
+    }
 }
+
+#undef PROCESS
 
 namespace Inference
 {
@@ -613,16 +641,22 @@ bool InferenceSubsystem::createInputOutputTensors()
 }
 
 /// @brief Подготовка входных тензоров.
-void InferenceSubsystem::prepareInputTensors()
-{}
+bool InferenceSubsystem::prepareInputTensors()
+{
+    return true;
+}
 
 /// @brief
-void InferenceSubsystem::inference()
-{}
+bool InferenceSubsystem::inference()
+{
+    return true;
+}
 
 /// @brief Подготовка выходных тензоров.
-void InferenceSubsystem::prepareOutputTensors()
-{}
+bool InferenceSubsystem::prepareOutputTensors()
+{
+    return true;
+}
 
 /// @brief
 void InferenceSubsystem::reset()

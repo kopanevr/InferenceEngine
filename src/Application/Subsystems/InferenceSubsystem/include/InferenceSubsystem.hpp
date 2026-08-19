@@ -171,7 +171,7 @@ private:
     /// @brief
     bool body();
 
-    /// @brief
+    /// @brief Конвейер.
     void pipeline();
 
     /// @brief Подготовка перед запуском вывода.
@@ -188,11 +188,11 @@ private:
     bool createInputOutputTensors();
 
     /// @brief Подготовка входных тензоров.
-    void prepareInputTensors();
+    bool prepareInputTensors();
     /// @brief
-    void inference();
+    bool inference();
     /// @brief Подготовка выходных тензоров.
-    void prepareOutputTensors();
+    bool prepareOutputTensors();
 
     /// @brief
     void reset();
