@@ -171,6 +171,9 @@ private:
     /// @brief
     bool body();
 
+    /// @brief
+    void pipeline();
+
     /// @brief Подготовка перед запуском вывода.
     /// @warning
     /// @param options Опции.
@@ -186,6 +189,8 @@ private:
 
     /// @brief Подготовка входных тензоров.
     void prepareInputTensors();
+    /// @brief
+    void inference();
     /// @brief Подготовка выходных тензоров.
     void prepareOutputTensors();
 

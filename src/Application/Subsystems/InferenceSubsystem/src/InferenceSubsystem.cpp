@@ -172,21 +172,7 @@ bool InferenceSubsystem::body()
 
     //
 
-    inferenceHandler.session->Run(
-            Ort::RunOptions{{}},
-
-            // Входы.
-
-            inferenceHandler.inputTensorNames.data(),
-            inferenceHandler.inputTensorValues.data(),
-            1u,
-
-            // Выходы.
-
-            inferenceHandler.outputTensorNames.data(),
-            inferenceHandler.outputTensorValues.data(),
-            1u
-        );
+    pipeline();
 
     //
 
@@ -204,6 +190,37 @@ bool InferenceSubsystem::body()
     }
 
     return true;
+}
+
+/// @brief
+void InferenceSubsystem::pipeline()
+{
+    enum class Step : uint8_t
+    {
+        prepareInputTensors,
+        inference,
+        prepareOutputTensors,
+
+        Count
+    };
+
+    Step step = Step::Count;
+
+    switch (step)
+    {
+    case Step::prepareInputTensors:
+        prepareInputTensors();
+        break;
+    case Step::inference:
+        inference();
+        break;
+    case Step::prepareOutputTensors:
+        prepareOutputTensors();
+        break;
+
+    default:
+        break;
+    }
 }
 
 namespace Inference
@@ -597,6 +614,10 @@ bool InferenceSubsystem::createInputOutputTensors()
 
 /// @brief Подготовка входных тензоров.
 void InferenceSubsystem::prepareInputTensors()
+{}
+
+/// @brief
+void InferenceSubsystem::inference()
 {}
 
 /// @brief Подготовка выходных тензоров.
