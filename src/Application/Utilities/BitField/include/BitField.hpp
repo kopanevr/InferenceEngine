@@ -86,3 +86,10 @@ using bitSubfield_t = uint64_t;
         0, \
         sizeof(GET_BIT_FIELD_NAME(id)) \
     )
+
+/// @brief
+#define SET_FLAG(id, flag) GET_BIT_FIELD_NAME(id).flag = 1
+/// @brief
+#define RESET_FLAG(id, flag) GET_BIT_FIELD_NAME(id).flag = 0
+/// @brief
+#define GET_FLAG_STATE(id, flag) GET_BIT_FIELD_NAME(id).flag

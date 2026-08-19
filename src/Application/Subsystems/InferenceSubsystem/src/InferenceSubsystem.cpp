@@ -77,6 +77,7 @@ int InferenceSubsystem::processBody()
         //
 
         FLAG(isStarted)
+        FLAG(isErrorAppeared)
 
         //
 
@@ -84,9 +85,16 @@ int InferenceSubsystem::processBody()
 
     //
 
-    if (!GET_BIT_FIELD(0).isStarted)
+    if (!GET_FLAG_STATE(0, isStarted))
     {
         // Выполнение при первом запуске.
+
+        // Проверка создания входных и выходных тензоров.
+
+        if (inferenceHandler.inputTensorNames.empty() || !inferenceHandler.outputTensorNames.empty())
+        {
+            return 1;
+        }
 
         try
         {
@@ -99,7 +107,7 @@ int InferenceSubsystem::processBody()
             return 1;
         }
 
-        GET_BIT_FIELD(0).isStarted = true;
+        SET_FLAG(0, isStarted);
     }
     else
     {
@@ -170,13 +178,13 @@ bool InferenceSubsystem::body()
             // Входы.
 
             inferenceHandler.inputTensorNames.data(),
-            &inferenceHandler.inputTensors.at(0).value,
+            inferenceHandler.inputTensorValues.data(),
             1u,
 
             // Выходы.
 
             inferenceHandler.outputTensorNames.data(),
-            &inferenceHandler.outputTensors.at(0).value,
+            inferenceHandler.outputTensorValues.data(),
             1u
         );
 
@@ -240,7 +248,7 @@ void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
     {
         // Стирание битового поля.
 
-        if (GET_BIT_FIELD(0).isCompleted)
+        if (GET_FLAG_STATE(0, isCompleted))
         {
             reset();
 
@@ -248,7 +256,7 @@ void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
         }
     }
 
-    if (GET_BIT_FIELD(0).isCompleted) { return; }
+    if (GET_FLAG_STATE(0, isCompleted)) { return; }
 
     //
 
@@ -323,12 +331,12 @@ void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
     {
         ERROR("Ошибка при создании входных и выходных тензоров");
 
-        GET_BIT_FIELD_NAME(0).isErrorAppeared = true;
+        SET_FLAG(0, isErrorAppeared);
     }
 
-    GET_BIT_FIELD(0).isCompleted = true;
+    SET_FLAG(0, isCompleted);
 
-    if (GET_BIT_FIELD_NAME(0).isErrorAppeared)
+    if (GET_FLAG_STATE(0, isErrorAppeared))
     {
         WARNING("Подготовка перед выводом была завершена c ошибками");
 
@@ -516,24 +524,26 @@ bool InferenceSubsystem::createInputOutputTensors()
 
         //
 
-        tensor.metaData.shape = inferenceHandler.modelInfo->inputTensorsInfo.at(i).shape;
-
-        assert(inferenceHandler.modelInfo->inputTensorsInfo.empty());
+        assert(!inferenceHandler.modelInfo->inputTensorsInfo.empty());
 
         assert(i <= inferenceHandler.modelInfo->inputTensorsInfo.size());
 
         if (!inferenceHandler.modelInfo->inputTensorsInfo.empty() && i <= inferenceHandler.modelInfo->inputTensorsInfo.size())
         {
-            tensor.value = Ort::Value::CreateTensor(
-                memoryInfo,
+            tensor.metaData.shape = inferenceHandler.modelInfo->inputTensorsInfo[i].shape;
 
-                static_cast<void*>(tensor.rawData.data()),
-                tensor.rawData.size(),
+            inferenceHandler.inputTensorValues.push_back(
+                Ort::Value::CreateTensor(
+                    memoryInfo,
 
-                tensor.metaData.shape->data(), // Указатель на размерность тензора.
-                tensor.metaData.shape->size(), //
+                    static_cast<void*>(tensor.rawData.data()),
+                    tensor.rawData.size(),
 
-                inferenceHandler.modelInfo->inputTensorsInfo[i].tensorElementDataType
+                    tensor.metaData.shape->data(), // Указатель на размерность тензора.
+                    tensor.metaData.shape->size(), //
+
+                    inferenceHandler.modelInfo->inputTensorsInfo[i].tensorElementDataType
+                )
             );
         }
         else
@@ -552,24 +562,26 @@ bool InferenceSubsystem::createInputOutputTensors()
 
         //
 
-        tensor.metaData.shape = inferenceHandler.modelInfo->outputTensorsInfo.at(i).shape;
-
         assert(!inferenceHandler.modelInfo->outputTensorsInfo.empty());
 
         assert(i <= inferenceHandler.modelInfo->outputTensorsInfo.size());
 
         if (!inferenceHandler.modelInfo->outputTensorsInfo.empty() && i <= inferenceHandler.modelInfo->outputTensorsInfo.size())
         {
-            tensor.value = Ort::Value::CreateTensor(
-                memoryInfo,
+            tensor.metaData.shape = inferenceHandler.modelInfo->outputTensorsInfo[i].shape;
 
-                static_cast<void*>(tensor.rawData.data()),
-                tensor.rawData.size(),
+            inferenceHandler.outputTensorValues.push_back(
+                Ort::Value::CreateTensor(
+                    memoryInfo,
 
-                tensor.metaData.shape->data(), // Указатель на размерность тензора.
-                tensor.metaData.shape->size(), //
+                    static_cast<void*>(tensor.rawData.data()),
+                    tensor.rawData.size(),
 
-                inferenceHandler.modelInfo->outputTensorsInfo[i].tensorElementDataType
+                    tensor.metaData.shape->data(), // Указатель на размерность тензора.
+                    tensor.metaData.shape->size(), //
+
+                    inferenceHandler.modelInfo->outputTensorsInfo[i].tensorElementDataType
+                )
             );
         }
         else
@@ -582,6 +594,14 @@ bool InferenceSubsystem::createInputOutputTensors()
 
     return 0;
 }
+
+/// @brief Подготовка входных тензоров.
+void InferenceSubsystem::prepareInputTensors()
+{}
+
+/// @brief Подготовка выходных тензоров.
+void InferenceSubsystem::prepareOutputTensors()
+{}
 
 /// @brief
 void InferenceSubsystem::reset()

@@ -66,9 +66,6 @@ namespace Inference
 
         /// @brief Сырые данные тензора.
         std::vector<std::byte> rawData;
-
-        /// @brief  Тензор.
-        Ort::Value value{nullptr};
     };
 
     /// @brief Дескриптор вывода.
@@ -89,6 +86,11 @@ namespace Inference
         /// @brief Выходные тензоры.
         std::vector<Inference::Tensor> outputTensors;
 
+        /// @brief
+        std::vector<Ort::Value> inputTensorValues;
+        /// @brief
+        std::vector<Ort::Value> outputTensorValues;
+
         /// @brief Имена входных тензоров.
         std::vector<const char*> inputTensorNames;
         /// @brief Имена выходных тензоров.
@@ -99,6 +101,9 @@ namespace Inference
         {
             inputTensors.clear();
             outputTensors.clear();
+
+            inputTensorNames.clear();
+            outputTensorNames.clear();
 
             threadingOptions.reset();
             env.reset();
@@ -178,6 +183,11 @@ private:
     /// @brief Создание входных и выходных тензоров.
     /// @param
     bool createInputOutputTensors();
+
+    /// @brief Подготовка входных тензоров.
+    void prepareInputTensors();
+    /// @brief Подготовка выходных тензоров.
+    void prepareOutputTensors();
 
     /// @brief
     void reset();
