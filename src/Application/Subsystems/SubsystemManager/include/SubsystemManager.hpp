@@ -19,7 +19,10 @@
 
 //
 
+// Подсистемы.
+
 #include "Logger.hpp"
+#include "FrameCaptureSubsystem.hpp"
 #include "InferenceSubsystem.hpp"
 
 //
@@ -40,6 +43,7 @@ class SubsystemManager final : public Subsystem
 {
 private:
     /// @brief Количество подсистем.
+    /// @details
     static constexpr size_t subsystemCount = static_cast<size_t>(SubsystemId::Count) - 1u;
 
     /// @brief Подсистемы.
@@ -58,6 +62,7 @@ private:
         size_t i = {};
 
         ADD_SUBSYSTEM(Logger);
+        ADD_SUBSYSTEM(FrameCaptureSubsystem);
         ADD_SUBSYSTEM(InferenceSubsystem);
     }
 

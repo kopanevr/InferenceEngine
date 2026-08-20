@@ -91,7 +91,7 @@ int InferenceSubsystem::processBody()
 
         // Проверка создания входных и выходных тензоров.
 
-        if (inferenceHandler.inputTensorNames.empty() || !inferenceHandler.outputTensorNames.empty())
+        if (inferenceContext.inputTensorNames.empty() || !inferenceContext.outputTensorNames.empty())
         {
             return 1;
         }
@@ -174,7 +174,7 @@ bool InferenceSubsystem::body()
 
     // Запуск конвейера.
 
-    pipeline();
+    pipeline(timerToTimeSinceStartThread);
 
     //
 
@@ -195,15 +195,18 @@ bool InferenceSubsystem::body()
 }
 
 #define PROCESS(process) \
+    start = timerManager.getElapsedTime(timer); \
     if (!process()) \
     { \
         SET_FLAG(0, isErrorAppeared); \
         break; \
     } \
+    timerManager.getElapsedTime(timer) - start; \
     step++;
 
 /// @brief Конвейер.
-void InferenceSubsystem::pipeline()
+/// @brief Таймер для вычисления времен шагов вывода.
+void InferenceSubsystem::pipeline(const Timer& timer)
 {
     STATIC_BIT_FIELD(
         0, // Идентификатор битового поля.
@@ -219,6 +222,8 @@ void InferenceSubsystem::pipeline()
         ); // Статическое битовое поле.
 
     uint8_t step = {};
+
+    std::chrono::steady_clock::duration start = {}; // Продолжительность для отсчета времени.
 
     //
 
@@ -240,9 +245,13 @@ void InferenceSubsystem::pipeline()
     if (GET_FLAG_STATE(0, isErrorAppeared))
     {
 #ifndef NDEBUG
-        DEBUG("Ошибка произошла на этапе:", step);
+        SEPARATOR;
+
+        DEBUG("Ошибка произошла на шаге:", step);
 
         //
+
+        SEPARATOR;
 #endif
 
         return;
@@ -266,7 +275,7 @@ namespace Inference
 } // namespace Inference
 
 /// @brief Подготовка перед запуском вывода.
-/// @warning При @ref Inference::PrepareSettings::Reprepare происходит стирание @ref Inference::InferenceHandler, если подготовка была произведена.
+/// @warning При @ref Inference::PrepareSettings::Reprepare происходит стирание @ref Inference::inferenceContext, если подготовка была произведена.
 /// @param options Опции. Дополнительно смотреть @ref Inference::PrepareSettings.
 void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
 {
@@ -307,23 +316,23 @@ void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
 
     INFO("Запуск подготовки перед выводом");
 
-    inferenceHandler.threadingOptions = std::unique_ptr<Ort::ThreadingOptions>(new Ort::ThreadingOptions());
+    inferenceContext.threadingOptions = std::unique_ptr<Ort::ThreadingOptions>(new Ort::ThreadingOptions());
 
     // Установка количества потоков внутри операции.
 
-    inferenceHandler.threadingOptions->SetGlobalIntraOpNumThreads(4);
+    inferenceContext.threadingOptions->SetGlobalIntraOpNumThreads(4);
 
     // Установка количества потоков между операциями.
 
-    inferenceHandler.threadingOptions->SetGlobalInterOpNumThreads(1);
+    inferenceContext.threadingOptions->SetGlobalInterOpNumThreads(1);
 
     // Создание окружения.
 
-    inferenceHandler.env = std::unique_ptr<Ort::Env>(new Ort::Env(*inferenceHandler.threadingOptions, ORT_LOGGING_LEVEL_WARNING, "onnxInference"));
+    inferenceContext.env = std::unique_ptr<Ort::Env>(new Ort::Env(*inferenceContext.threadingOptions, ORT_LOGGING_LEVEL_WARNING, "onnxInference"));
 
-    inferenceHandler.sessionOptions = std::unique_ptr<Ort::SessionOptions>(new Ort::SessionOptions());
+    inferenceContext.sessionOptions = std::unique_ptr<Ort::SessionOptions>(new Ort::SessionOptions());
 
-    inferenceHandler.sessionOptions->DisablePerSessionThreads();
+    inferenceContext.sessionOptions->DisablePerSessionThreads();
 
     // Проверка наличия оптимизированной модели.
 
@@ -337,7 +346,7 @@ void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
     {
         // Создание сессии.
 
-        inferenceHandler.session = std::unique_ptr<Ort::Session>(new Ort::Session(*inferenceHandler.env, pathToOptimizedModelFile, *inferenceHandler.sessionOptions));
+        inferenceContext.session = std::unique_ptr<Ort::Session>(new Ort::Session(*inferenceContext.env, pathToOptimizedModelFile, *inferenceContext.sessionOptions));
     }
     else
     {
@@ -345,13 +354,13 @@ void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
 
         // Установка уровня оптимизации модели.
 
-        inferenceHandler.sessionOptions->SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
+        inferenceContext.sessionOptions->SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
 
         DEBUG("Создание сессии...");
 
         // Установка пути к файлу оптимизированной модели.
 
-        inferenceHandler.sessionOptions->SetOptimizedModelFilePath("");
+        inferenceContext.sessionOptions->SetOptimizedModelFilePath("");
 
         // Создание сессии.
 
@@ -364,9 +373,9 @@ void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
 
         DEBUG("Путь к файлу модели:", pathToModelFile);
 
-        inferenceHandler.session = std::unique_ptr<Ort::Session>(new Ort::Session(*inferenceHandler.env, pathToModelFile, *inferenceHandler.sessionOptions));
+        inferenceContext.session = std::unique_ptr<Ort::Session>(new Ort::Session(*inferenceContext.env, pathToModelFile, *inferenceContext.sessionOptions));
 #else
-        inferenceHandler.session = std::unique_ptr<Ort::Session>(new Ort::Session(*inferenceHandler.env, modelLoader->getPathToModelFile(), *inferenceHandler.sessionOptions));
+        inferenceContext.session = std::unique_ptr<Ort::Session>(new Ort::Session(*inferenceContext.env, modelLoader->getPathToModelFile(), *inferenceContext.sessionOptions));
 #endif
     }
 
@@ -422,7 +431,7 @@ void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
 /// @brief Получение информации о модели.
 /// @param handler Дескриптор вывода.
 /// @return Информация о модели.
-std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inference::InferenceHandler& handler)
+std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inference::InferenceContext& handler)
 {
     std::unique_ptr<Inference::ModelInfo> modelInfo = std::unique_ptr<Inference::ModelInfo>(new Inference::ModelInfo());
 
@@ -442,9 +451,9 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
 
         // Получение имен входов.
 
-        inferenceHandler.modelInfo->inputTensorsInfo.at(i).name = handler.session->GetOutputNameAllocated(i, allocator).get();
+        inferenceContext.modelInfo->inputTensorsInfo.at(i).name = handler.session->GetOutputNameAllocated(i, allocator).get();
 
-        inferenceHandler.inputTensorNames.push_back(inferenceHandler.modelInfo->inputTensorsInfo.at(i).name.c_str());
+        inferenceContext.inputTensorNames.push_back(inferenceContext.modelInfo->inputTensorsInfo.at(i).name.c_str());
 
         Inference::TensorInfo tensorInfo = {};
 
@@ -501,9 +510,9 @@ std::unique_ptr<Inference::ModelInfo> InferenceSubsystem::getModelInfo(const Inf
 
         // Получение имен входов.
 
-        inferenceHandler.modelInfo->outputTensorsInfo.at(i).name = handler.session->GetOutputNameAllocated(i, allocator).get();
+        inferenceContext.modelInfo->outputTensorsInfo.at(i).name = handler.session->GetOutputNameAllocated(i, allocator).get();
 
-        inferenceHandler.outputTensorNames.push_back(inferenceHandler.modelInfo->outputTensorsInfo.at(i).name.c_str());
+        inferenceContext.outputTensorNames.push_back(inferenceContext.modelInfo->outputTensorsInfo.at(i).name.c_str());
 
         Inference::TensorInfo tensorInfo = {};
 
@@ -557,27 +566,27 @@ bool InferenceSubsystem::createInputOutputTensors()
 {
     // Получение информации о модели.
 
-    inferenceHandler.modelInfo = getModelInfo(inferenceHandler);
+    inferenceContext.modelInfo = getModelInfo(inferenceContext);
 
     Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
 
     // Создание входных тензоров.
 
-    for (size_t i = 0; i < inferenceHandler.modelInfo->inputCount; i++)
+    for (size_t i = 0; i < inferenceContext.modelInfo->inputCount; i++)
     {
         Inference::Tensor tensor = {};
 
         //
 
-        assert(!inferenceHandler.modelInfo->inputTensorsInfo.empty());
+        assert(!inferenceContext.modelInfo->inputTensorsInfo.empty());
 
-        assert(i <= inferenceHandler.modelInfo->inputTensorsInfo.size());
+        assert(i <= inferenceContext.modelInfo->inputTensorsInfo.size());
 
-        if (!inferenceHandler.modelInfo->inputTensorsInfo.empty() && i <= inferenceHandler.modelInfo->inputTensorsInfo.size())
+        if (!inferenceContext.modelInfo->inputTensorsInfo.empty() && i <= inferenceContext.modelInfo->inputTensorsInfo.size())
         {
-            tensor.metaData.shape = inferenceHandler.modelInfo->inputTensorsInfo[i].shape;
+            tensor.metaData.shape = inferenceContext.modelInfo->inputTensorsInfo[i].shape;
 
-            inferenceHandler.inputTensorValues.push_back(
+            inferenceContext.inputTensorValues.push_back(
                 Ort::Value::CreateTensor(
                     memoryInfo,
 
@@ -587,7 +596,7 @@ bool InferenceSubsystem::createInputOutputTensors()
                     tensor.metaData.shape->data(), // Указатель на размерность тензора.
                     tensor.metaData.shape->size(), //
 
-                    inferenceHandler.modelInfo->inputTensorsInfo[i].tensorElementDataType
+                    inferenceContext.modelInfo->inputTensorsInfo[i].tensorElementDataType
                 )
             );
         }
@@ -596,26 +605,26 @@ bool InferenceSubsystem::createInputOutputTensors()
             return 1;
         }
 
-        inferenceHandler.inputTensors.push_back(std::move(tensor));
+        inferenceContext.inputTensors.push_back(std::move(tensor));
     }
 
     // Создание выходных тензоров.
 
-    for (size_t i = 0; i < inferenceHandler.modelInfo->outputCount; i++)
+    for (size_t i = 0; i < inferenceContext.modelInfo->outputCount; i++)
     {
         Inference::Tensor tensor = {};
 
         //
 
-        assert(!inferenceHandler.modelInfo->outputTensorsInfo.empty());
+        assert(!inferenceContext.modelInfo->outputTensorsInfo.empty());
 
-        assert(i <= inferenceHandler.modelInfo->outputTensorsInfo.size());
+        assert(i <= inferenceContext.modelInfo->outputTensorsInfo.size());
 
-        if (!inferenceHandler.modelInfo->outputTensorsInfo.empty() && i <= inferenceHandler.modelInfo->outputTensorsInfo.size())
+        if (!inferenceContext.modelInfo->outputTensorsInfo.empty() && i <= inferenceContext.modelInfo->outputTensorsInfo.size())
         {
-            tensor.metaData.shape = inferenceHandler.modelInfo->outputTensorsInfo[i].shape;
+            tensor.metaData.shape = inferenceContext.modelInfo->outputTensorsInfo[i].shape;
 
-            inferenceHandler.outputTensorValues.push_back(
+            inferenceContext.outputTensorValues.push_back(
                 Ort::Value::CreateTensor(
                     memoryInfo,
 
@@ -625,7 +634,7 @@ bool InferenceSubsystem::createInputOutputTensors()
                     tensor.metaData.shape->data(), // Указатель на размерность тензора.
                     tensor.metaData.shape->size(), //
 
-                    inferenceHandler.modelInfo->outputTensorsInfo[i].tensorElementDataType
+                    inferenceContext.modelInfo->outputTensorsInfo[i].tensorElementDataType
                 )
             );
         }
@@ -634,7 +643,7 @@ bool InferenceSubsystem::createInputOutputTensors()
             return 1;
         }
 
-        inferenceHandler.outputTensors.push_back(std::move(tensor));
+        inferenceContext.outputTensors.push_back(std::move(tensor));
     }
 
     return 0;
@@ -643,6 +652,13 @@ bool InferenceSubsystem::createInputOutputTensors()
 /// @brief Подготовка входных тензоров.
 bool InferenceSubsystem::prepareInputTensors()
 {
+    if (!inferenceContext.inputTensors.empty())
+    {
+        return false;
+    }
+
+
+
     return true;
 }
 
@@ -655,13 +671,18 @@ bool InferenceSubsystem::inference()
 /// @brief Подготовка выходных тензоров.
 bool InferenceSubsystem::prepareOutputTensors()
 {
+    if (!inferenceContext.outputTensors.empty())
+    {
+        return false;
+    }
+
     return true;
 }
 
 /// @brief
 void InferenceSubsystem::reset()
 {
-    inferenceHandler.reset();
+    inferenceContext.reset();
 }
 
 /// @brief Устанавливает путь к директории модели.

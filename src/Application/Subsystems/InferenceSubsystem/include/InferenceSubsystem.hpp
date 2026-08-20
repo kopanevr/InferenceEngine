@@ -68,8 +68,8 @@ namespace Inference
         std::vector<std::byte> rawData;
     };
 
-    /// @brief Дескриптор вывода.
-    struct InferenceHandler final
+    /// @brief Контекст вывода.
+    struct InferenceContext final
     {
         /// @brief Указатель на параметры пулов потоков.
         std::unique_ptr<Ort::ThreadingOptions> threadingOptions;
@@ -121,6 +121,11 @@ namespace Inference
         std::chrono::steady_clock::duration inferencePeriod;
         /// @brief Частота.
         uint16_t rate;
+
+        struct
+        {
+
+        };
     };
 #endif
 } // namespace Inference
@@ -140,8 +145,8 @@ private:
     /// @brief Менеджер таймера.
     TimerManager timerManager;
 
-    /// @brief Дескриптор вывода.
-    Inference::InferenceHandler inferenceHandler;
+    /// @brief Контекст вывода.
+    Inference::InferenceContext inferenceContext;
 
 #ifndef NDEBUG
     /// @brief Профилировщик.
@@ -172,7 +177,8 @@ private:
     bool body();
 
     /// @brief Конвейер.
-    void pipeline();
+    /// @brief Таймер для вычисления времен шагов вывода.
+    void pipeline(const Timer& timer);
 
     /// @brief Подготовка перед запуском вывода.
     /// @warning
@@ -181,7 +187,7 @@ private:
 
     /// @brief Получение информации о модели.
     /// @param handler Дескриптор вывода.
-    [[nodiscard]] std::unique_ptr<Inference::ModelInfo> getModelInfo(const Inference::InferenceHandler& handler);
+    [[nodiscard]] std::unique_ptr<Inference::ModelInfo> getModelInfo(const Inference::InferenceContext& handler);
 
     /// @brief Создание входных и выходных тензоров.
     /// @param

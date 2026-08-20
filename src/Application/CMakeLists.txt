@@ -6,6 +6,7 @@ add_executable(
 )
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/Application/Subsystems/Logger)
+add_subdirectory(${CMAKE_SOURCE_DIR}/src/Application/Subsystems/FrameCaptureSubsystem)
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/Application/Subsystems/InferenceSubsystem)
 add_subdirectory(${CMAKE_SOURCE_DIR}/src/Application/Subsystems/SubsystemManager)
 
@@ -20,6 +21,7 @@ target_include_directories(
 
 target_link_libraries(
     Application PRIVATE
+    FrameCaptureSubsystem
     InferenceSubsystem
     SubsystemManager
 )
