@@ -14,6 +14,12 @@
 
 #include "TimerManager.hpp"
 
+#include "BitField.hpp"
+
+//
+
+#include "ApplicationContext.hpp"
+
 //
 
 class SubsystemManager;
@@ -34,8 +40,17 @@ private:
     /// @brief Менеджер таймера.
     TimerManager timerManager;
 
-    /// @brief
-    bool isAllowedToExecute : 1;
+    BIT_FIELD(
+        9, // Идентификатор битового поля.
+        1, // Ожидаемый размер битового поля в байт.
+
+        //
+
+        FLAG(isAllowedToExecute)
+
+        //
+
+    ); // Битовое поле.
 private:
     /// @brief Конструктор.
     /// @param argc Количество аргументов.

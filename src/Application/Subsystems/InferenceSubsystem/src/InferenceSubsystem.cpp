@@ -81,7 +81,7 @@ int InferenceSubsystem::processBody()
 
         //
 
-        ); // Статическое битовое поле.
+    ); // Статическое битовое поле.
 
     //
 
@@ -155,7 +155,7 @@ bool InferenceSubsystem::body()
 
         //
 
-        ); // Статическое битовое поле.
+    ); // Статическое битовое поле.
 
     static Timer timerToTimeSinceStartThread(0u); // Таймер для отсчета периода времени с момента запуска потока.
 
@@ -219,7 +219,7 @@ void InferenceSubsystem::pipeline(const Timer& timer)
 
         //
 
-        ); // Статическое битовое поле.
+    ); // Статическое битовое поле.
 
     uint8_t step = {};
 
@@ -290,7 +290,7 @@ void InferenceSubsystem::prepareBeforeStartInference(uint8_t options)
 
         //
 
-        ); // Статическое битовое поле.
+    ); // Статическое битовое поле.
 
     //
 

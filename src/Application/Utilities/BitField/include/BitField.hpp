@@ -43,8 +43,7 @@ using bitSubfield_t = uint64_t;
         listOfBitSubfield \
     } \
     MAKE_BIT_FIELD_NAME(id); \
-    static_assert(sizeof(GET_BIT_FIELD_NAME(id)) == expectedSize); \
-    GET_BIT_FIELD_NAME(id)
+    static_assert(sizeof(GET_BIT_FIELD_NAME(id)) == expectedSize)
 
 /// @brief Статическое битовое поле с ожидаемым размером.
 /// @param id Идентификатор.
@@ -56,8 +55,7 @@ using bitSubfield_t = uint64_t;
         listOfBitSubfield \
     } \
     MAKE_BIT_FIELD_NAME(id); \
-    static_assert(sizeof(GET_BIT_FIELD_NAME(id)) == expectedSize); \
-    GET_BIT_FIELD_NAME(id)
+    static_assert(sizeof(GET_BIT_FIELD_NAME(id)) == expectedSize)
 
 /// @brief Константное битовое поле с ожидаемым размером.
 /// @param id Идентификатор.
@@ -69,8 +67,7 @@ using bitSubfield_t = uint64_t;
         listOfBitSubfield \
     } \
     MAKE_BIT_FIELD_NAME(id); \
-    static_assert(sizeof(GET_BIT_FIELD_NAME(id)) == expectedSize); \
-    GET_BIT_FIELD_NAME(id)
+    static_assert(sizeof(GET_BIT_FIELD_NAME(id)) == expectedSize)
 
 //
 

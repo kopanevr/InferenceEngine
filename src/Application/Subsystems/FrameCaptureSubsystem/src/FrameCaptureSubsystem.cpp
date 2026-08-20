@@ -31,8 +31,7 @@ void FrameCaptureSubsystem::init()
 
 /// @brief Предварительная настройка перед запуском подсистемы.
 void FrameCaptureSubsystem::setBeforeStartUp()
-{
-}
+{}
 
 /// @brief Предварительная настройка перед остановкой подсистемы.
 void FrameCaptureSubsystem::setBeforeShutDown()

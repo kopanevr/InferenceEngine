@@ -29,11 +29,10 @@ Application::Application(int argc, char* argv[])
 
     if (!commandLineInterpreter->isParsed())
     {
-        isAllowedToExecute = false;
+        RESET_FLAG(9, isAllowedToExecute);
 
         return;
     }
-
 
     subsystemManager = std::unique_ptr<SubsystemManager>(new SubsystemManager());
 
@@ -66,7 +65,7 @@ Application::Application(int argc, char* argv[])
     }
     else
     {
-        isAllowedToExecute = false;
+        RESET_FLAG(9, isAllowedToExecute);
 
         return;
     }
@@ -75,7 +74,7 @@ Application::Application(int argc, char* argv[])
 
     init();
 
-    isAllowedToExecute = true;
+    SET_FLAG(9, isAllowedToExecute);
 }
 
 /// @brief Деструктор.
@@ -110,7 +109,7 @@ void Application::init()
 /// @return Результат выполнения.
 int Application::exec()
 {
-    if (!isAllowedToExecute) { return EXIT_FAILURE; }
+    if (!GET_FLAG_STATE(9, isAllowedToExecute)) { return EXIT_FAILURE; }
 
     // Таймер для отсчета периода времени с момента запуска приложения.
 

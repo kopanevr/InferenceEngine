@@ -42,7 +42,7 @@ private:
     void setBeforeShutDown() override;
 
     /// @brief Тело процесса.
-    int processBody() override { return 0; }
+    int processBody() override;
 
     /// @brief
     void run();
