@@ -33,16 +33,22 @@ private:
     FrameCaptureSubsystem(const FrameCaptureSubsystem&) = delete;
 
     /// @brief Инициализация подсистемы.
-    void init() override {}
+    void init() override;
 
     /// @brief Предварительная настройка перед запуском подсистемы.
-    void setBeforeStartUp() override {}
+    void setBeforeStartUp() override;
 
     /// @brief Предварительная настройка перед остановкой подсистемы.
-    void setBeforeShutDown() override {}
+    void setBeforeShutDown() override;
 
     /// @brief Тело процесса.
     int processBody() override { return 0; }
+
+    /// @brief
+    void run();
+
+    /// @brief
+    bool body();
 public:
     /// @brief Деструктор.
     ~FrameCaptureSubsystem() = default;

@@ -138,7 +138,7 @@ void InferenceSubsystem::run()
         if (!body()) { break; }
     }
 
-    DEBUG("Подсистема", subsystemHandle.name, "");
+    DEBUG("Подсистема", subsystemHandle.name, "остановлена");
 }
 
 /// @brief
