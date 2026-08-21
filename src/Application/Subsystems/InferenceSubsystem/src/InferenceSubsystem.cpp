@@ -7,8 +7,12 @@
 
 //
 
-#include "ModelLoader.hpp"
 #include "SubsystemId.hpp"
+#include "InferencePipelineProcess.hpp"
+
+//
+
+#include "ModelLoader.hpp"
 
 //
 
