@@ -121,11 +121,6 @@ namespace Inference
         std::chrono::steady_clock::duration inferencePeriod;
         /// @brief Частота.
         uint16_t rate;
-
-        struct
-        {
-
-        };
     };
 #endif
 } // namespace Inference

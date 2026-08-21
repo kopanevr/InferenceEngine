@@ -657,14 +657,17 @@ bool InferenceSubsystem::prepareInputTensors()
         return false;
     }
 
-
-
     return true;
 }
 
 /// @brief
 bool InferenceSubsystem::inference()
 {
+    if (!inferenceContext.inputTensors.empty() || !inferenceContext.outputTensors.empty())
+    {
+        return false;
+    }
+
     return true;
 }
 
